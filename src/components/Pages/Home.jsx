@@ -94,27 +94,13 @@ export default function Home() {
     const topArtists = Object.values(artistMap).sort((a, b) => b.count - a.count).slice(0, 3)
     if (!topArtists.length) return
 
-    const apiKey = userProfile?.settings?.youtubeApiKey
-    if (!apiKey) {
-      // Show cards without pre-loaded tracks — they'll fetch on click
-      setDailyMixes(topArtists.map((a, i) => ({
-        name: `Daily Mix ${i + 1}`,
-        artist: a.artist,
-        coverUrl: a.coverUrl,
-        tracks: [],
-      })))
-      return
-    }
-
     let cancelled = false
     const fetchMixes = async () => {
       const mixes = await Promise.all(
         topArtists.map(async (a, i) => {
           try {
             const q = encodeURIComponent(a.artist + ' official music')
-            const url = apiKey
-              ? `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${q}&maxResults=12&key=${apiKey}`
-              : `/api/youtube-search?q=${q}&maxResults=12`
+            const url = `/api/youtube-search?q=${q}&maxResults=12`
             const res = await fetch(url)
             const data = await res.json()
             const tracks = (data.items || [])
@@ -141,12 +127,11 @@ export default function Home() {
     }
     fetchMixes()
     return () => { cancelled = true }
-  }, [recentTracks, userProfile?.settings?.youtubeApiKey])
+  }, [recentTracks])
 
   // Artist-based suggestions
   useEffect(() => {
-    const apiKey = userProfile?.settings?.youtubeApiKey
-    if (!currentTrack?.artist || !apiKey) { setArtistTracks([]); return }
+    if (!currentTrack?.artist) { setArtistTracks([]); return }
     const artist = currentTrack.artist
     const currentTitle = currentTrack.title?.toLowerCase() || ''
     setArtistName(artist)
@@ -155,9 +140,7 @@ export default function Home() {
     const run = async () => {
       try {
         const q = encodeURIComponent(artist + ' official')
-        const searchUrl = apiKey
-          ? `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${q}&maxResults=15&key=${apiKey}`
-          : `/api/youtube-search?q=${q}&maxResults=15`
+        const searchUrl = `/api/youtube-search?q=${q}&maxResults=15`
         const searchRes = await fetch(searchUrl)
         const data = await searchRes.json()
         const candidates = (data.items || []).filter(
@@ -167,9 +150,7 @@ export default function Home() {
 
         // Fetch durations to filter out Shorts (<90s)
         const ids = candidates.map((i) => i.id.videoId).join(',')
-        const detailsUrl = apiKey
-          ? `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${apiKey}`
-          : `/api/youtube-details?ids=${encodeURIComponent(ids)}`
+        const detailsUrl = `/api/youtube-details?ids=${encodeURIComponent(ids)}`
         const detailsRes = await fetch(detailsUrl)
         const detailsData = detailsRes.ok ? await detailsRes.json() : { items: [] }
         const durationMap = {}
@@ -204,7 +185,7 @@ export default function Home() {
 
     run()
     return () => { cancelled = true }
-  }, [currentTrack?.artist, currentTrack?.id, userProfile?.settings?.youtubeApiKey])
+  }, [currentTrack?.artist, currentTrack?.id])
 
   const greeting = getGreeting(userProfile?.firstName)
   const isMobile = useIsMobile()
@@ -335,8 +316,9 @@ export default function Home() {
           </div>
           <ul style={{ color: '#888', fontSize: '0.88rem', lineHeight: 1.8, paddingLeft: '0', listStyle: 'none' }}>
             <li>→ Head to <span style={{ color: '#1E90FF', cursor: 'pointer' }} onClick={() => navigate('/app/search')}>Search</span> to find and play music</li>
-            <li>→ Go to <span style={{ color: '#1E90FF', cursor: 'pointer' }} onClick={() => navigate('/app/settings')}>Settings</span> to add your YouTube Data API v3 key for full search</li>
-            <li>→ Press <kbd style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '2px 6px', fontSize: '0.78rem' }}>Space</kbd> to play/pause. <kbd style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '2px 6px', fontSize: '0.78rem' }}>Alt+→</kbd> / <kbd style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '2px 6px', fontSize: '0.78rem' }}>Alt+←</kbd> to skip</li>
+            {!isMobile && (
+              <li>→ Press <kbd style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '2px 6px', fontSize: '0.78rem' }}>Space</kbd> to play/pause. <kbd style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '2px 6px', fontSize: '0.78rem' }}>Alt+→</kbd> / <kbd style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '2px 6px', fontSize: '0.78rem' }}>Alt+←</kbd> to skip</li>
+            )}
           </ul>
         </div>
       )}
@@ -453,7 +435,7 @@ function DailyMixModal({ mix, onClose }) {
         {/* Track list */}
         <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0 24px' }}>
           {mix.tracks.length === 0 ? (
-            <p style={{ color: '#555', textAlign: 'center', padding: '48px', fontSize: '0.88rem' }}>Add your YouTube API key in Settings to load tracks</p>
+            <p style={{ color: '#555', textAlign: 'center', padding: '48px', fontSize: '0.88rem' }}>No tracks loaded yet. Try searching for music first.</p>
           ) : (
             mix.tracks.map((track, i) => {
               const isActive = currentTrack?.id === track.id

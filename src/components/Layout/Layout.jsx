@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import PlayerBar from './PlayerBar'
@@ -6,12 +6,15 @@ import QueuePanel from './QueuePanel'
 import LyricsPanel from './LyricsPanel'
 import DJDugo from './DJDugo'
 import MobileNav from './MobileNav'
+import MobileHeader from './MobileHeader'
+import MobileSidebar from './MobileSidebar'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function Layout() {
   const { currentTrack, showQueue, showLyrics } = usePlayer()
   const isMobile = useIsMobile()
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   // On mobile: 60px bottom nav + 75px compact player (if playing). Desktop: 90px player.
   const bottomPad = isMobile
@@ -23,10 +26,21 @@ export default function Layout() {
       {/* Sidebar — hidden on mobile */}
       {!isMobile && <Sidebar />}
 
+      {/* Mobile fixed header */}
+      {isMobile && <MobileHeader onAvatarTap={() => setMobileSidebarOpen(true)} />}
+
+      {/* Mobile slide-in sidebar */}
+      {isMobile && (
+        <MobileSidebar
+          isOpen={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Main content area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Scrollable page content */}
-        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: bottomPad }}>
+        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: bottomPad, paddingTop: isMobile ? '52px' : '0' }}>
           <Outlet />
         </div>
       </div>

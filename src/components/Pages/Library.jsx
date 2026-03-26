@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Library as LibraryIcon, Music2, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Plus, Library as LibraryIcon, Music2, Trash2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { db } from '../../firebase'
 import {
   collection,
@@ -17,6 +18,7 @@ import {
 export default function Library() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [playlists, setPlaylists] = useState([])
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
@@ -52,58 +54,63 @@ export default function Library() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 40px', maxWidth: '1000px' }}>
+    <div style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1000px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
         <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>Your Library</h1>
-        <button
-          onClick={() => setCreating(true)}
-          style={{
-            background: '#1E90FF',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '10px 18px',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'background 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#3aa3ff')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#1E90FF')}
-        >
-          <Plus size={16} />
-          New Playlist
-        </button>
+        {/* Desktop: show inline button */}
+        {!isMobile && (
+          <button
+            onClick={() => setCreating(true)}
+            style={{
+              background: '#1E90FF',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '10px 18px',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#3aa3ff')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#1E90FF')}
+          >
+            <Plus size={16} />
+            New Playlist
+          </button>
+        )}
       </div>
 
       {/* Create form */}
       {creating && (
         <div style={{ background: '#111', border: '1px solid #1E90FF30', borderRadius: '14px', padding: '20px 24px', marginBottom: '24px' }}>
           <p style={{ color: '#fff', fontWeight: 600, marginBottom: '14px' }}>Name your playlist</p>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
             <input
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') createPlaylist(); if (e.key === 'Escape') { setCreating(false); setNewName('') } }}
               placeholder="My Playlist"
-              style={{ flex: 1, background: '#0d0d0d', border: '1px solid #222', borderRadius: '8px', padding: '10px 14px', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
+              style={{ flex: 1, minWidth: 0, background: '#0d0d0d', border: '1px solid #222', borderRadius: '8px', padding: '10px 14px', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
             />
-            <button
-              onClick={createPlaylist}
-              style={{ background: '#1E90FF', border: 'none', borderRadius: '8px', padding: '10px 18px', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Create
-            </button>
-            <button
-              onClick={() => { setCreating(false); setNewName('') }}
-              style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '8px', padding: '10px 16px', color: '#888', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={createPlaylist}
+                style={{ background: '#1E90FF', border: 'none', borderRadius: '8px', padding: '10px 18px', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Create
+              </button>
+              <button
+                onClick={() => { setCreating(false); setNewName('') }}
+                style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '8px', padding: '10px 16px', color: '#888', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -161,7 +168,7 @@ export default function Library() {
                 padding: '4px',
                 cursor: 'pointer',
                 color: '#888',
-                opacity: 0,
+                opacity: isMobile ? 1 : 0,
                 transition: 'opacity 0.15s, color 0.15s',
                 display: 'flex',
               }}
@@ -173,6 +180,31 @@ export default function Library() {
           </div>
         ))}
       </div>
+
+      {/* Mobile floating + button */}
+      {isMobile && (
+        <button
+          onClick={() => setCreating(true)}
+          style={{
+            position: 'fixed',
+            bottom: '80px',
+            right: '20px',
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            background: '#1E90FF',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(30,144,255,0.45)',
+            zIndex: 90,
+          }}
+        >
+          <Plus size={24} color="#fff" />
+        </button>
+      )}
     </div>
   )
 }
