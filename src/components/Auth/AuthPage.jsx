@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth, checkAuthRateLimit, recordFailedAuthAttempt, clearAuthAttempts } from '../../contexts/AuthContext'
 import { Eye, EyeOff, ArrowLeft, Music, Radio, Mic2, ListMusic } from 'lucide-react'
 import RadioDugoLogo from '../../assets/RadioDugoLogo'
+import { sanitizeEmail, sanitizeName, LIMITS } from '../../utils/sanitize'
 
 const FEATURES = [
   { icon: Radio, text: 'Stream millions of tracks via YouTube' },
@@ -21,6 +22,7 @@ export default function AuthPage({ mode }) {
   const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
+  const [lockedUntil, setLockedUntil] = useState(null) // minutes until unlock
 
   const isSignup = mode === 'signup'
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -34,7 +36,7 @@ export default function AuthPage({ mode }) {
       if (!form.email) return setError('Enter your email address.')
       setLoading(true)
       try {
-        await resetPassword(form.email)
+        await resetPassword(sanitizeEmail(form.email))
         setInfo('Password reset email sent. Check your inbox.')
       } catch (err) {
         setError(friendlyError(err.code))
@@ -44,22 +46,51 @@ export default function AuthPage({ mode }) {
       return
     }
 
+    // ── Input validation ──────────────────────────────────────────
+    const email = sanitizeEmail(form.email)
+    if (!email) return setError('Enter a valid email address.')
+
     if (isSignup) {
-      if (!form.firstName.trim()) return setError('First name is required.')
+      const firstName = sanitizeName(form.firstName)
+      if (!firstName) return setError('First name is required.')
+      if (form.firstName.length > LIMITS.NAME) return setError(`First name must be under ${LIMITS.NAME} characters.`)
       if (form.password.length < 6) return setError('Password must be at least 6 characters.')
+      if (form.password.length > LIMITS.PASSWORD) return setError('Password is too long.')
       if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
+    }
+
+    // ── Client-side rate limit: 5 attempts / 15 min / email ───────
+    const rl = checkAuthRateLimit(email)
+    if (!rl.allowed) {
+      setLockedUntil(rl.resetIn)
+      return setError(`Too many failed attempts. Try again in ${rl.resetIn} minute${rl.resetIn === 1 ? '' : 's'}.`)
     }
 
     setLoading(true)
     try {
       if (isSignup) {
-        await signup(form.email, form.password, form.firstName.trim(), form.lastName.trim())
+        await signup(email, form.password, sanitizeName(form.firstName), sanitizeName(form.lastName))
+        clearAuthAttempts(email) // reset on success
       } else {
-        await login(form.email, form.password)
+        await login(email, form.password)
+        clearAuthAttempts(email) // reset on success
       }
       navigate('/app/home')
     } catch (err) {
-      setError(friendlyError(err.code))
+      // Record the failed attempt for login (not signup — Firebase handles that)
+      if (!isSignup) recordFailedAuthAttempt(email)
+
+      const msg = friendlyError(err.code)
+      setError(msg)
+
+      // Re-check limit so we can show the updated remaining count
+      const updated = checkAuthRateLimit(email)
+      if (!updated.allowed) {
+        setLockedUntil(updated.resetIn)
+        setError(`Too many failed attempts. Try again in ${updated.resetIn} minute${updated.resetIn === 1 ? '' : 's'}.`)
+      } else if (!isSignup && updated.remaining <= 2 && updated.remaining > 0) {
+        setError(`${msg} (${updated.remaining} attempt${updated.remaining === 1 ? '' : 's'} left)`)
+      }
     } finally {
       setLoading(false)
     }
@@ -130,23 +161,23 @@ export default function AuthPage({ mode }) {
               {forgotMode
                 ? "We'll send a reset link to your inbox."
                 : isSignup
-                ? 'Join Radio Dugo. It\'s free.'
+                ? "Join Radio Dugo. It's free."
                 : 'Sign in to pick up where you left off.'}
             </p>
           </div>
 
           {/* Card */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '24px', padding: '36px 32px', backdropFilter: 'blur(20px)' }}>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {isSignup && !forgotMode && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                  <AuthField label="First Name" value={form.firstName} onChange={set('firstName')} placeholder="Name" autoFocus />
-                  <AuthField label="Last Name" value={form.lastName} onChange={set('lastName')} placeholder="Last name" />
+                  <AuthField label="First Name" value={form.firstName} onChange={set('firstName')} placeholder="Name" autoFocus maxLength={LIMITS.NAME} />
+                  <AuthField label="Last Name" value={form.lastName} onChange={set('lastName')} placeholder="Last name" maxLength={LIMITS.NAME} />
                 </div>
               )}
 
               <div style={{ marginBottom: '16px' }}>
-                <AuthField label="Email" type="email" value={form.email} onChange={set('email')} placeholder="you@email.com" autoFocus={!isSignup} />
+                <AuthField label="Email" type="email" value={form.email} onChange={set('email')} placeholder="you@email.com" autoFocus={!isSignup} maxLength={LIMITS.EMAIL} />
               </div>
 
               {!forgotMode && (
@@ -159,6 +190,7 @@ export default function AuthPage({ mode }) {
                       onChange={set('password')}
                       placeholder="••••••••"
                       required
+                      maxLength={LIMITS.PASSWORD}
                       style={inputStyle}
                       onFocus={(e) => { e.target.style.borderColor = '#1E90FF'; e.target.style.boxShadow = '0 0 0 3px rgba(30,144,255,0.12)' }}
                       onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none' }}
@@ -176,7 +208,7 @@ export default function AuthPage({ mode }) {
 
               {isSignup && !forgotMode && (
                 <div style={{ marginBottom: '24px' }}>
-                  <AuthField label="Confirm Password" type="password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••" />
+                  <AuthField label="Confirm Password" type="password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••" maxLength={LIMITS.PASSWORD} />
                 </div>
               )}
 
@@ -184,7 +216,7 @@ export default function AuthPage({ mode }) {
                 <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '24px' }}>
                   <button
                     type="button"
-                    onClick={() => { setForgotMode(true); setError(''); setInfo('') }}
+                    onClick={() => { setForgotMode(true); setError(''); setInfo(''); setLockedUntil(null) }}
                     style={{ background: 'none', border: 'none', color: '#1E90FF', fontSize: '0.8rem', cursor: 'pointer' }}
                   >
                     Forgot password?
@@ -193,7 +225,7 @@ export default function AuthPage({ mode }) {
               )}
 
               {error && (
-                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '12px 14px', marginBottom: '20px', color: '#f87171', fontSize: '0.85rem' }}>
+                <div style={{ background: lockedUntil ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${lockedUntil ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.2)'}`, borderRadius: '10px', padding: '12px 14px', marginBottom: '20px', color: lockedUntil ? '#fbbf24' : '#f87171', fontSize: '0.85rem' }}>
                   {error}
                 </div>
               )}
@@ -205,32 +237,32 @@ export default function AuthPage({ mode }) {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !!lockedUntil}
                 style={{
                   width: '100%',
-                  background: loading ? 'rgba(30,144,255,0.5)' : 'linear-gradient(135deg, #1E90FF 0%, #1260b0 100%)',
+                  background: (loading || lockedUntil) ? 'rgba(30,144,255,0.35)' : 'linear-gradient(135deg, #1E90FF 0%, #1260b0 100%)',
                   color: '#fff',
                   border: 'none',
                   padding: '14px',
                   borderRadius: '12px',
                   fontSize: '0.95rem',
                   fontWeight: 700,
-                  cursor: loading ? 'not-allowed' : 'pointer',
+                  cursor: (loading || lockedUntil) ? 'not-allowed' : 'pointer',
                   letterSpacing: '0.02em',
                   transition: 'opacity 0.2s, transform 0.15s',
-                  boxShadow: loading ? 'none' : '0 4px 20px rgba(30,144,255,0.3)',
+                  boxShadow: (loading || lockedUntil) ? 'none' : '0 4px 20px rgba(30,144,255,0.3)',
                   marginBottom: forgotMode ? '12px' : '0',
                 }}
-                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseEnter={(e) => { if (!loading && !lockedUntil) e.currentTarget.style.transform = 'translateY(-1px)' }}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
               >
-                {loading ? 'Please wait…' : forgotMode ? 'Send Reset Email' : isSignup ? 'Create Account' : 'Sign In'}
+                {loading ? 'Please wait…' : lockedUntil ? `Locked for ${lockedUntil}m` : forgotMode ? 'Send Reset Email' : isSignup ? 'Create Account' : 'Sign In'}
               </button>
 
               {forgotMode && (
                 <button
                   type="button"
-                  onClick={() => { setForgotMode(false); setError(''); setInfo('') }}
+                  onClick={() => { setForgotMode(false); setError(''); setInfo(''); setLockedUntil(null) }}
                   style={{ width: '100%', background: 'none', border: 'none', color: '#555', fontSize: '0.85rem', cursor: 'pointer', padding: '10px', marginTop: '4px' }}
                 >
                   ← Back to login
@@ -254,7 +286,7 @@ export default function AuthPage({ mode }) {
   )
 }
 
-function AuthField({ label, type = 'text', value, onChange, placeholder, autoFocus }) {
+function AuthField({ label, type = 'text', value, onChange, placeholder, autoFocus, maxLength }) {
   return (
     <div>
       <label style={labelStyle}>{label}</label>
@@ -264,6 +296,7 @@ function AuthField({ label, type = 'text', value, onChange, placeholder, autoFoc
         onChange={onChange}
         placeholder={placeholder}
         autoFocus={autoFocus}
+        maxLength={maxLength}
         style={inputStyle}
         onFocus={(e) => { e.target.style.borderColor = '#1E90FF'; e.target.style.boxShadow = '0 0 0 3px rgba(30,144,255,0.12)' }}
         onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none' }}

@@ -7,6 +7,7 @@ import { db } from '../../firebase'
 import { doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import TrackRow from '../shared/TrackRow'
 import { PlaylistIcon, PLAYLIST_COLORS } from '../shared/PlaylistIcons'
+import { sanitizeName, LIMITS } from '../../utils/sanitize'
 
 export default function PlaylistView() {
   const { id } = useParams()
@@ -41,9 +42,10 @@ export default function PlaylistView() {
   }
 
   const saveEdit = async () => {
-    if (!editName.trim()) return
+    const cleanName = sanitizeName(editName)
+    if (!cleanName) return
     await updateDoc(doc(db, 'users', user.uid, 'playlists', id), {
-      name: editName.trim(),
+      name: cleanName,
     })
     setEditing(false)
   }
@@ -130,6 +132,7 @@ export default function PlaylistView() {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditing(false) }}
+                maxLength={LIMITS.PLAYLIST_NAME}
                 style={{ background: '#1a1a1a', border: '1px solid #1E90FF', borderRadius: '8px', padding: '8px 14px', color: '#fff', fontSize: '1.5rem', fontWeight: 800, outline: 'none', width: '100%', maxWidth: '400px' }}
               />
               <button onClick={saveEdit} style={{ background: '#1E90FF', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', color: '#fff', display: 'flex' }}><Check size={18} /></button>

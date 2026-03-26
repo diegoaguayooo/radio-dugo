@@ -16,6 +16,51 @@ import {
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
+// ── Client-side auth rate limiter (5 attempts / 15 min / email) ──────────────
+const AUTH_RL_PREFIX = 'rd_auth_rl_'
+const AUTH_MAX_ATTEMPTS = 5
+const AUTH_WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+
+export function checkAuthRateLimit(email) {
+  try {
+    const key = AUTH_RL_PREFIX + email.toLowerCase().trim()
+    const raw = localStorage.getItem(key)
+    if (!raw) return { allowed: true, remaining: AUTH_MAX_ATTEMPTS }
+    const { count, resetAt } = JSON.parse(raw)
+    if (Date.now() > resetAt) {
+      localStorage.removeItem(key)
+      return { allowed: true, remaining: AUTH_MAX_ATTEMPTS }
+    }
+    if (count >= AUTH_MAX_ATTEMPTS) {
+      const resetIn = Math.ceil((resetAt - Date.now()) / 1000 / 60)
+      return { allowed: false, remaining: 0, resetIn }
+    }
+    return { allowed: true, remaining: AUTH_MAX_ATTEMPTS - count }
+  } catch {
+    return { allowed: true, remaining: AUTH_MAX_ATTEMPTS }
+  }
+}
+
+export function recordFailedAuthAttempt(email) {
+  try {
+    const key = AUTH_RL_PREFIX + email.toLowerCase().trim()
+    const raw = localStorage.getItem(key)
+    if (!raw || Date.now() > JSON.parse(raw).resetAt) {
+      localStorage.setItem(key, JSON.stringify({ count: 1, resetAt: Date.now() + AUTH_WINDOW_MS }))
+    } else {
+      const data = JSON.parse(raw)
+      localStorage.setItem(key, JSON.stringify({ ...data, count: data.count + 1 }))
+    }
+  } catch { /* non-critical */ }
+}
+
+export function clearAuthAttempts(email) {
+  try {
+    localStorage.removeItem(AUTH_RL_PREFIX + email.toLowerCase().trim())
+  } catch { /* non-critical */ }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const AuthContext = createContext(null)
 
 export const useAuth = () => {

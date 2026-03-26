@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Settings as SettingsIcon, Key, User, Save, Check, ExternalLink, Eye, EyeOff, Info } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { AVATARS, AvatarIcon } from '../shared/AvatarIcons'
+import { sanitizeName, LIMITS } from '../../utils/sanitize'
 
 export default function Settings() {
   const { user, userProfile, updateUserProfile } = useAuth()
@@ -13,14 +14,18 @@ export default function Settings() {
   const [selectedAvatar, setSelectedAvatar] = useState(userProfile?.avatarId || '')
 
   const saveProfile = async () => {
-    if (!firstName.trim()) return
-    await updateUserProfile({ firstName: firstName.trim(), lastName: lastName.trim(), avatarId: selectedAvatar })
+    const cleanFirst = sanitizeName(firstName)
+    const cleanLast = sanitizeName(lastName)
+    if (!cleanFirst) return
+    await updateUserProfile({ firstName: cleanFirst, lastName: cleanLast, avatarId: selectedAvatar })
     setSaved('profile')
     setTimeout(() => setSaved(null), 2500)
   }
 
   const saveApiKey = async () => {
-    await updateUserProfile({ settings: { youtubeApiKey: clientId.trim() } })
+    // API key: only allow safe printable ASCII, max 200 chars
+    const cleanKey = clientId.replace(/[^\x20-\x7E]/g, '').trim().slice(0, 200)
+    await updateUserProfile({ settings: { youtubeApiKey: cleanKey } })
     setSaved('api')
     setTimeout(() => setSaved(null), 2500)
   }
@@ -77,8 +82,8 @@ export default function Settings() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-          <Field label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
-          <Field label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name (optional)" />
+          <Field label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" maxLength={LIMITS.NAME} />
+          <Field label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name (optional)" maxLength={LIMITS.NAME} />
         </div>
         <Field label="Email" value={user?.email || ''} disabled type="email" hint="Email cannot be changed here" />
         <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -164,12 +169,12 @@ function SectionHeader({ icon, title }) {
   )
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text', disabled, hint }) {
+function Field({ label, value, onChange, placeholder, type = 'text', disabled, hint, maxLength }) {
   return (
     <div>
       <label style={{ display: 'block', color: '#777', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>{label}</label>
       <input
-        type={type} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
+        type={type} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled} maxLength={maxLength}
         style={{ width: '100%', background: disabled ? '#0a0a0a' : '#0d0d0d', border: '1px solid #222', borderRadius: '10px', padding: '11px 14px', color: disabled ? '#444' : '#fff', fontSize: '0.9rem', outline: 'none', cursor: disabled ? 'not-allowed' : 'text' }}
       />
       {hint && <p style={{ color: '#444', fontSize: '0.72rem', marginTop: '5px' }}>{hint}</p>}
