@@ -1,23 +1,29 @@
 import React from 'react'
 import { X, Music2, Trash2 } from 'lucide-react'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function QueuePanel() {
   const { queue, queueIndex, currentTrack, playTrack, removeFromQueue, setShowQueue } = usePlayer()
+  const isMobile = useIsMobile()
+
+  const mobileStyle = {
+    position: 'fixed', inset: 0, zIndex: 201,
+    width: '100%', height: '100%',
+    background: '#0f0f0f',
+    display: 'flex', flexDirection: 'column',
+    overflow: 'hidden',
+  }
+  const desktopStyle = {
+    width: '320px', minWidth: '320px',
+    background: '#0f0f0f',
+    borderLeft: '1px solid #1a1a1a',
+    display: 'flex', flexDirection: 'column',
+    height: '100vh', overflow: 'hidden',
+  }
 
   return (
-    <div
-      style={{
-        width: '320px',
-        minWidth: '320px',
-        background: '#0f0f0f',
-        borderLeft: '1px solid #1a1a1a',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={isMobile ? mobileStyle : desktopStyle}>
       {/* Header */}
       <div style={{ padding: '24px 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1a1a1a' }}>
         <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1rem' }}>Queue</h2>

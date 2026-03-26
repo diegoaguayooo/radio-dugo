@@ -1,13 +1,11 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { BarChart2, Clock, Heart, Settings, LogOut, Radio, X, User } from 'lucide-react'
+import { BarChart2, Clock, Heart, LogOut, X, User } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { usePlayer } from '../../contexts/PlayerContext'
 import { AvatarIcon } from '../shared/AvatarIcons'
 
 export default function MobileSidebar({ isOpen, onClose }) {
   const { user, userProfile, logout } = useAuth()
-  const { djEnabled, toggleDJ } = usePlayer()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -114,56 +112,6 @@ export default function MobileSidebar({ isOpen, onClose }) {
           ))}
         </div>
 
-        <div style={{ height: '1px', background: '#1a1a1a', margin: '4px 24px' }} />
-
-        {/* DJ Dugo toggle */}
-        <div style={{ padding: '8px 12px' }}>
-          <button
-            onClick={toggleDJ}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              width: '100%', background: 'none', border: 'none',
-              color: djEnabled ? '#1E90FF' : '#ccc', fontSize: '0.95rem', fontWeight: 500,
-              padding: '13px 12px', borderRadius: '10px',
-              cursor: 'pointer', textAlign: 'left',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <Radio size={20} color={djEnabled ? '#1E90FF' : '#666'} />
-              DJ Dugo
-            </div>
-            {/* Toggle pill */}
-            <div style={{
-              width: 38, height: 22, borderRadius: 11,
-              background: djEnabled ? '#1E90FF' : '#333',
-              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-            }}>
-              <div style={{
-                position: 'absolute', top: 3, left: djEnabled ? 19 : 3,
-                width: 16, height: 16, borderRadius: '50%',
-                background: '#fff', transition: 'left 0.2s',
-              }} />
-            </div>
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => handleNav('/app/settings')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '14px',
-              width: '100%', background: 'none', border: 'none',
-              color: '#ccc', fontSize: '0.95rem', fontWeight: 500,
-              padding: '13px 12px', borderRadius: '10px',
-              cursor: 'pointer', textAlign: 'left',
-              transition: 'background 0.15s, color 0.15s',
-            }}
-            onTouchStart={(e) => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.color = '#fff' }}
-            onTouchEnd={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#ccc' }}
-          >
-            <Settings size={20} color="#666" />
-            Settings & Privacy
-          </button>
-        </div>
 
         {/* Spacer to push logout down */}
         <div style={{ flex: 1, minHeight: 24 }} />

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { Search as SearchIcon, X, AlertCircle, Music2, Clock } from 'lucide-react'
+import { Search as SearchIcon, X, Music2, Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import TrackRow from '../shared/TrackRow'
@@ -43,7 +42,6 @@ const GENRES = [
 ]
 
 export default function Search() {
-  const { userProfile } = useAuth()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   const [query, setQuery] = useState('')
@@ -54,26 +52,6 @@ export default function Search() {
   const [recentSearches, setRecentSearches] = useState(getRecentSearches)
   const inputRef = useRef(null)
   const debounceRef = useRef(null)
-
-  const clientApiKey = userProfile?.settings?.youtubeApiKey
-
-  // Builds the right URLs — serverless in production, direct in local dev fallback
-  const buildUrls = (q, ids) => {
-    // Try serverless API first (works in production on Vercel)
-    const useServer = !import.meta.env.DEV || true // always try server route
-    if (useServer) {
-      return {
-        searchUrl: `/api/youtube-search?q=${encodeURIComponent(q)}&maxResults=25`,
-        detailsUrl: ids ? `/api/youtube-details?ids=${encodeURIComponent(ids)}` : null,
-        isServer: true,
-      }
-    }
-    return {
-      searchUrl: `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${encodeURIComponent(q)}&maxResults=25&key=${clientApiKey}`,
-      detailsUrl: ids ? `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${clientApiKey}` : null,
-      isServer: false,
-    }
-  }
 
   const search = useCallback(
     async (q) => {
@@ -86,25 +64,13 @@ export default function Search() {
       setLoading(true)
       setError('')
       try {
-        const { searchUrl, isServer } = buildUrls(q, null)
-        const res = await fetch(searchUrl)
-
-        // If serverless isn't available (local dev without vercel dev), fall back to client key
-        if (!res.ok && isServer && res.status === 404) {
-          if (!clientApiKey) { setError('no_key'); setHasSearched(true); setLoading(false); return }
-          const fallbackUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${encodeURIComponent(q)}&maxResults=25&key=${clientApiKey}`
-          const fbRes = await fetch(fallbackUrl)
-          if (!fbRes.ok) throw new Error((await fbRes.json())?.error?.message || `API error ${fbRes.status}`)
-          const data = await fbRes.json()
-          return processResults(data, q, clientApiKey, true)
-        }
-
+        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(q)}&maxResults=25`)
         if (!res.ok) {
-          const err = await res.json()
+          const err = await res.json().catch(() => ({}))
           throw new Error(err?.error?.message || `API error ${res.status}`)
         }
         const data = await res.json()
-        await processResults(data, q, null, isServer)
+        await processResults(data, q)
       } catch (e) {
         setError('api_error')
         console.error(e)
@@ -112,19 +78,16 @@ export default function Search() {
         setLoading(false)
       }
     },
-    [clientApiKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  const processResults = async (data, q, fallbackKey, isServer) => {
+  const processResults = async (data, q) => {
     const items = (data.items || []).filter((item) => item.id?.videoId)
     const ids = items.map((i) => i.id.videoId).join(',')
 
     let durationMap = {}
     try {
-      const detailsUrl = isServer
-        ? `/api/youtube-details?ids=${encodeURIComponent(ids)}`
-        : `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${fallbackKey}`
-      const detailsRes = await fetch(detailsUrl)
+      const detailsRes = await fetch(`/api/youtube-details?ids=${encodeURIComponent(ids)}`)
       const detailsData = detailsRes.ok ? await detailsRes.json() : { items: [] }
       for (const v of detailsData.items || []) {
         durationMap[v.id] = parseISO8601(v.contentDetails?.duration)
@@ -222,27 +185,10 @@ export default function Search() {
         )}
       </form>
 
-      {/* No API key warning */}
-      {error === 'no_key' && (
-        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '14px', padding: '20px 24px', marginBottom: '32px', display: 'flex', gap: '14px' }}>
-          <AlertCircle size={20} color="#F59E0B" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div>
-            <p style={{ color: '#fff', fontWeight: 600, marginBottom: '6px' }}>Search not available locally</p>
-            <p style={{ color: '#888', fontSize: '0.88rem', lineHeight: 1.6 }}>
-              Search works automatically on the deployed site. For local dev, add a YouTube Data API v3 key in{' '}
-              <span onClick={() => navigate('/app/settings')} style={{ color: '#1E90FF', cursor: 'pointer', textDecoration: 'underline' }}>
-                Settings
-              </span>
-              .
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* API error */}
       {error === 'api_error' && (
         <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '14px', padding: '20px 24px', marginBottom: '32px' }}>
-          <p style={{ color: '#f87171', fontWeight: 600 }}>Search failed. Check your YouTube API key or network connection.</p>
+          <p style={{ color: '#f87171', fontWeight: 600 }}>Search failed. Please try again.</p>
         </div>
       )}
 

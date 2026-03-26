@@ -45,11 +45,11 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* Lyrics panel — desktop only */}
-      {!isMobile && showLyrics && <LyricsPanel />}
+      {/* Lyrics panel */}
+      {showLyrics && <LyricsPanel />}
 
-      {/* Queue panel — desktop only */}
-      {!isMobile && showQueue && <QueuePanel />}
+      {/* Queue panel */}
+      {showQueue && <QueuePanel />}
 
       {/* Player bar */}
       {currentTrack && <PlayerBar />}

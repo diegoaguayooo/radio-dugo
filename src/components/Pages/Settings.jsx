@@ -28,7 +28,6 @@ export default function Settings() {
   const saveProfile = async () => {
     const cleanFirst = sanitizeName(firstName)
     const cleanLast = sanitizeName(lastName)
-    if (!cleanFirst) return
     await updateUserProfile({ firstName: cleanFirst, lastName: cleanLast, avatarId: selectedAvatar })
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)

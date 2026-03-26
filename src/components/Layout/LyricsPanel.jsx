@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { X, Mic2 } from 'lucide-react'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const parseLRC = (lrc) => {
   if (!lrc) return []
@@ -19,6 +20,7 @@ const parseLRC = (lrc) => {
 
 export default function LyricsPanel() {
   const { currentTrack, currentPos, setShowLyrics } = usePlayer()
+  const isMobile = useIsMobile()
   const [lyrics, setLyrics] = useState([])
   const [loading, setLoading] = useState(false)
   const [noLyrics, setNoLyrics] = useState(false)
@@ -67,19 +69,23 @@ export default function LyricsPanel() {
 
   const isSynced = lyrics.some((l) => l.time !== -1)
 
+  const mobileStyle = {
+    position: 'fixed', inset: 0, zIndex: 201,
+    width: '100%', height: '100%',
+    background: '#0f0f0f',
+    display: 'flex', flexDirection: 'column',
+    overflow: 'hidden',
+  }
+  const desktopStyle = {
+    width: '300px', minWidth: '300px',
+    background: '#0f0f0f',
+    borderLeft: '1px solid #1a1a1a',
+    display: 'flex', flexDirection: 'column',
+    height: '100vh', overflow: 'hidden',
+  }
+
   return (
-    <div
-      style={{
-        width: '300px',
-        minWidth: '300px',
-        background: '#0f0f0f',
-        borderLeft: '1px solid #1a1a1a',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={isMobile ? mobileStyle : desktopStyle}>
       {/* Header */}
       <div
         style={{
