@@ -16,6 +16,8 @@ import {
 import RadioDugoLogo from '../../assets/RadioDugoLogo'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { AvatarIcon } from '../shared/AvatarIcons'
+import { PlaylistIcon } from '../shared/PlaylistIcons'
 import { db } from '../../firebase'
 import {
   collection,
@@ -186,21 +188,17 @@ export default function Sidebar() {
             >
               <div
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '6px',
-                  background: pl.coverUrl ? 'transparent' : '#1a1a1a',
-                  flexShrink: 0,
-                  overflow: 'hidden',
+                  width: 28, height: 28, borderRadius: '6px', flexShrink: 0, overflow: 'hidden',
                   border: dropTarget === pl.id ? '1px solid #1E90FF' : '1px solid #222',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: pl.iconId || pl.coverUrl ? 'transparent' : '#1a1a1a',
                 }}
               >
-                {pl.coverUrl
-                  ? <img src={pl.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <Music2 size={14} color={dropTarget === pl.id ? '#1E90FF' : '#444'} />
+                {pl.iconId
+                  ? <PlaylistIcon id={pl.iconId} size={28} style={{ borderRadius: 5 }} />
+                  : pl.coverUrl
+                    ? <img src={pl.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <Music2 size={14} color={dropTarget === pl.id ? '#1E90FF' : '#444'} />
                 }
               </div>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -231,9 +229,11 @@ export default function Sidebar() {
               overflow: 'hidden',
             }}
           >
-            {userProfile?.photoURL
-              ? <img src={userProfile.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : (userProfile?.firstName || user?.displayName || 'U')[0].toUpperCase()
+            {userProfile?.avatarId
+              ? <AvatarIcon id={userProfile.avatarId} size={34} />
+              : userProfile?.photoURL
+                ? <img src={userProfile.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : (userProfile?.firstName || user?.displayName || 'U')[0].toUpperCase()
             }
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>

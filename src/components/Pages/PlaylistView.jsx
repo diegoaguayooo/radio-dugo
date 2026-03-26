@@ -1,19 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Play, Shuffle, Edit2, Check, X, Trash2, Music2, Camera } from 'lucide-react'
+import { Play, Shuffle, Edit2, Check, X, Trash2, Music2, Palette } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlayer } from '../../contexts/PlayerContext'
-import { db, storage } from '../../firebase'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  serverTimestamp,
-} from 'firebase/firestore'
+import { db } from '../../firebase'
+import { doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import TrackRow from '../shared/TrackRow'
+import { PlaylistIcon, PLAYLIST_COLORS } from '../shared/PlaylistIcons'
 
 export default function PlaylistView() {
   const { id } = useParams()
@@ -25,9 +18,7 @@ export default function PlaylistView() {
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [loading, setLoading] = useState(true)
-  const [coverUploading, setCoverUploading] = useState(false)
-  const [coverError, setCoverError] = useState('')
-  const coverInputRef = useRef(null)
+  const [iconPickerOpen, setIconPickerOpen] = useState(false)
 
   useEffect(() => {
     if (!user || !id) return
@@ -44,37 +35,9 @@ export default function PlaylistView() {
     return unsub
   }, [user, id, navigate])
 
-  const uploadCover = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file || !user) return
-    if (file.size > 5 * 1024 * 1024) {
-      setCoverError('Image must be under 5 MB')
-      return
-    }
-    setCoverUploading(true)
-    setCoverError('')
-    // Reset input so same file can be re-selected after error
-    e.target.value = ''
-    try {
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), 20000)
-      )
-      const storageRef = ref(storage, `playlist-covers/${user.uid}/${id}`)
-      await Promise.race([uploadBytes(storageRef, file), timeout])
-      const url = await getDownloadURL(storageRef)
-      await updateDoc(doc(db, 'users', user.uid, 'playlists', id), { coverUrl: url })
-    } catch (err) {
-      if (err.message === 'timeout') {
-        setCoverError('Upload timed out. Enable Firebase Storage in your Firebase Console.')
-      } else if (err.code === 'storage/unauthorized') {
-        setCoverError('Permission denied. Update Firebase Storage rules to allow authenticated writes.')
-      } else {
-        setCoverError(`Upload failed: ${err.message}`)
-      }
-      console.error('Cover upload failed:', err)
-    } finally {
-      setCoverUploading(false)
-    }
+  const selectIcon = async (colorId) => {
+    await updateDoc(doc(db, 'users', user.uid, 'playlists', id), { iconId: colorId })
+    setIconPickerOpen(false)
   }
 
   const saveEdit = async () => {
@@ -115,31 +78,46 @@ export default function PlaylistView() {
     <div style={{ padding: '32px 32px 40px', maxWidth: '1000px' }}>
       {/* Header */}
       <div style={{ display: 'flex', gap: '28px', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap' }}>
-        {/* Cover */}
-        <div
-          style={{ position: 'relative', width: 180, height: 180, flexShrink: 0, cursor: 'pointer' }}
-          onClick={() => coverInputRef.current?.click()}
-          title="Change cover image"
-          onMouseEnter={(e) => { e.currentTarget.querySelector('.cover-overlay').style.opacity = '1' }}
-          onMouseLeave={(e) => { e.currentTarget.querySelector('.cover-overlay').style.opacity = '0' }}
-        >
-          <div style={{ width: '100%', height: '100%', borderRadius: '16px', background: '#1a1a1a', border: '1px solid #222', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {playlist.coverUrl
-              ? <img src={playlist.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <Music2 size={52} color="#2a2a2a" />
+        {/* Cover — click to open color/icon picker */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div
+            onClick={() => setIconPickerOpen((v) => !v)}
+            title="Change icon color"
+            style={{ width: 180, height: 180, cursor: 'pointer', borderRadius: 16, overflow: 'hidden', position: 'relative' }}
+            onMouseEnter={(e) => e.currentTarget.querySelector('.icon-overlay').style.opacity = '1'}
+            onMouseLeave={(e) => e.currentTarget.querySelector('.icon-overlay').style.opacity = '0'}
+          >
+            {playlist.iconId
+              ? <PlaylistIcon id={playlist.iconId} size={180} style={{ borderRadius: 16 }} />
+              : <div style={{ width: '100%', height: '100%', borderRadius: 16, background: '#1a1a1a', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Music2 size={52} color="#2a2a2a" />
+                </div>
             }
+            <div className="icon-overlay" style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: 0, transition: 'opacity 0.2s', pointerEvents: 'none' }}>
+              <Palette size={28} color="#fff" />
+              <span style={{ color: '#fff', fontSize: '0.75rem', fontWeight: 600 }}>Change color</span>
+            </div>
           </div>
-          <div className="cover-overlay" style={{ position: 'absolute', inset: 0, borderRadius: '16px', background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: 0, transition: 'opacity 0.2s', pointerEvents: 'none' }}>
-            <Camera size={28} color="#fff" />
-            <span style={{ color: '#fff', fontSize: '0.75rem', fontWeight: 600 }}>
-              {coverUploading ? 'Uploading…' : 'Change cover'}
-            </span>
-          </div>
-          <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={uploadCover} />
+
+          {/* Color picker dropdown */}
+          {iconPickerOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: '#111', border: '1px solid #222', borderRadius: 16, padding: 14, marginTop: 8, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, width: 240, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
+              <p style={{ gridColumn: '1 / -1', color: '#666', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>Pick a color</p>
+              {PLAYLIST_COLORS.map((pc) => (
+                <button
+                  key={pc.id}
+                  onClick={() => selectIcon(pc.id)}
+                  title={pc.label}
+                  style={{ background: 'none', border: `2px solid ${playlist.iconId === pc.id ? '#fff' : 'transparent'}`, borderRadius: 8, padding: 2, cursor: 'pointer', transition: 'transform 0.15s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <PlaylistIcon id={pc.id} size={38} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        {coverError && (
-          <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '8px', maxWidth: 180, lineHeight: 1.5 }}>{coverError}</p>
-        )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ color: '#999', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Playlist</p>
