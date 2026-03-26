@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RadioDugoLogo from '../../assets/RadioDugoLogo'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // 0→1 ramp clamped to [from, to]
 const ramp = (p, from, to) => Math.max(0, Math.min(1, (p - from) / (to - from)))
@@ -20,6 +21,7 @@ export default function Landing() {
   const [p, setP] = useState(0)
   const containerRef = useRef(null)
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const onScroll = () => {
@@ -72,6 +74,111 @@ export default function Landing() {
     pointerEvents: 'none',
     ...extra,
   })
+
+  // ── Mobile: single-screen landing (no 800vh scroll) ─────────────────────
+  if (isMobile) {
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        background: '#080808',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 28px 56px',
+        position: 'relative',
+        overflow: 'hidden',
+        textAlign: 'center',
+      }}>
+        {/* Glow orb */}
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 480, height: 480,
+          background: 'radial-gradient(circle, rgba(30,144,255,0.14) 0%, rgba(99,102,241,0.06) 45%, transparent 72%)',
+          borderRadius: '50%', pointerEvents: 'none',
+        }} />
+
+        {/* Logo */}
+        <div style={{ marginBottom: '20px' }}>
+          <RadioDugoLogo size={64} />
+        </div>
+
+        {/* Title */}
+        <h1 style={{
+          color: '#fff',
+          fontSize: 'clamp(2.6rem, 11vw, 4rem)',
+          fontWeight: 900,
+          letterSpacing: '-0.04em',
+          lineHeight: 0.95,
+          marginBottom: '16px',
+        }}>
+          Radio Dugo
+        </h1>
+
+        {/* Tagline */}
+        <p style={{
+          color: '#505050',
+          fontSize: '0.78rem',
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          marginBottom: '14px',
+          fontWeight: 700,
+        }}>
+          Your frequency. Your world.
+        </p>
+
+        {/* Waveform */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '3px', height: '36px', marginBottom: '40px' }}>
+          {BARS.slice(0, 16).map((h, i) => (
+            <div
+              key={i}
+              className="wave-bar"
+              style={{
+                height: `${h}%`,
+                opacity: 0.3 + (i % 4) * 0.15,
+                animationDelay: `${(i * 0.087) % 1.1}s`,
+                animationDuration: `${0.72 + (i % 5) * 0.24}s`,
+                background: i % 3 === 0 ? '#1E90FF' : i % 3 === 1 ? '#5aabff' : '#6366f1',
+              }}
+            />
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: 320 }}>
+          <button
+            onClick={() => navigate('/signup')}
+            style={{
+              background: 'linear-gradient(135deg, #1E90FF 0%, #1260b0 100%)',
+              color: '#fff', border: 'none', padding: '16px',
+              borderRadius: '50px', fontSize: '1rem', fontWeight: 700,
+              cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase',
+              boxShadow: '0 4px 32px rgba(30,144,255,0.45)',
+            }}
+          >
+            Get Started
+          </button>
+          <button
+            onClick={() => navigate('/login')}
+            style={{
+              background: 'transparent', color: '#fff',
+              border: '1px solid rgba(255,255,255,0.15)',
+              padding: '16px', borderRadius: '50px',
+              fontSize: '1rem', fontWeight: 600, cursor: 'pointer',
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Log In
+          </button>
+        </div>
+
+        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.72rem', marginTop: '28px', letterSpacing: '0.08em' }}>
+          Free forever · No credit card required
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: '#080808' }}>

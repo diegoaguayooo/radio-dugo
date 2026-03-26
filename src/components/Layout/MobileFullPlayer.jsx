@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import {
   Heart, SkipBack, SkipForward, Play, Pause,
-  Shuffle, Repeat, Repeat1, Volume2, VolumeX,
+  Shuffle, Repeat, Repeat1,
   ChevronDown, ListMusic, Mic2,
 } from 'lucide-react'
 import { usePlayer } from '../../contexts/PlayerContext'
@@ -15,18 +15,16 @@ const fmt = (ms) => {
 
 export default function MobileFullPlayer({ onClose }) {
   const {
-    currentTrack, isPlaying, progress, duration, currentPos, volume,
-    shuffle, repeat, togglePlay, skipNext, skipPrev, seekTo, setVolume,
+    currentTrack, isPlaying, progress, duration, currentPos,
+    shuffle, repeat, togglePlay, skipNext, skipPrev, seekTo,
     toggleShuffle, toggleRepeat, isLiked, toggleLike,
     showQueue, setShowQueue, showLyrics, setShowLyrics,
   } = usePlayer()
 
   const progressRef = useRef(null)
-  const volRef = useRef(null)
   const touchStartY = useRef(null)
   const liked = currentTrack ? isLiked(currentTrack.id) : false
   const artwork = currentTrack?.artwork_url || null
-  const VolumeIcon = volume === 0 ? VolumeX : Volume2
 
   // ── Swipe down to close ──────────────────────────────────────────
   const onTouchStart = (e) => { touchStartY.current = e.touches[0].clientY }
@@ -44,14 +42,6 @@ export default function MobileFullPlayer({ onClose }) {
     const rect = progressRef.current.getBoundingClientRect()
     const t = e.touches[0] || e.changedTouches[0]
     seekTo(Math.max(0, Math.min(100, ((t.clientX - rect.left) / rect.width) * 100)))
-  }
-
-  const handleVolTouch = (e) => {
-    e.stopPropagation()
-    if (!volRef.current) return
-    const rect = volRef.current.getBoundingClientRect()
-    const t = e.touches[0] || e.changedTouches[0]
-    setVolume(Math.round(Math.max(0, Math.min(100, ((t.clientX - rect.left) / rect.width) * 100))))
   }
 
   return (
@@ -207,25 +197,6 @@ export default function MobileFullPlayer({ onClose }) {
           {repeat === 'one' ? <Repeat1 size={22} /> : <Repeat size={22} />}
           {repeat !== 'none' && <span style={{ position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#1E90FF' }} />}
         </button>
-      </div>
-
-      {/* ── Volume ──────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '28px' }}>
-        <VolumeIcon size={18} color="#555" />
-        <div
-          ref={volRef}
-          onTouchStart={handleVolTouch}
-          onTouchMove={handleVolTouch}
-          style={{ flex: 1, height: '5px', background: '#2a2a2a', borderRadius: '3px', position: 'relative', touchAction: 'none' }}
-        >
-          <div style={{ width: `${volume}%`, height: '100%', background: '#888', borderRadius: '3px' }} />
-          <div style={{
-            position: 'absolute', top: '50%', left: `${volume}%`,
-            transform: 'translate(-50%, -50%)',
-            width: 14, height: 14, borderRadius: '50%', background: '#fff',
-          }} />
-        </div>
-        <Volume2 size={18} color="#888" />
       </div>
 
       {/* ── Extra buttons ───────────────────────────────────────── */}

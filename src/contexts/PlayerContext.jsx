@@ -324,6 +324,41 @@ export const PlayerProvider = ({ children }) => {
     [user, likedIds]
   )
 
+  // ─── Media Session API (lock screen controls + background audio) ──────────
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    navigator.mediaSession.setActionHandler('play', () => {
+      const p = ytPlayerRef.current
+      if (p) p.playVideo()
+    })
+    navigator.mediaSession.setActionHandler('pause', () => {
+      const p = ytPlayerRef.current
+      if (p) p.pauseVideo()
+    })
+    navigator.mediaSession.setActionHandler('nexttrack', () => handleSkipNext())
+    navigator.mediaSession.setActionHandler('previoustrack', () => handleSkipPrev())
+  }, [handleSkipNext, handleSkipPrev])
+
+  useEffect(() => {
+    if (!currentTrack || !('mediaSession' in navigator)) return
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title || 'Unknown Track',
+        artist: currentTrack.artist || 'Radio Dugo',
+        artwork: currentTrack.artwork_url
+          ? [{ src: currentTrack.artwork_url, sizes: '300x300', type: 'image/jpeg' }]
+          : [],
+      })
+    } catch (_) {}
+  }, [currentTrack])
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+    } catch (_) {}
+  }, [isPlaying])
+
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e) => {

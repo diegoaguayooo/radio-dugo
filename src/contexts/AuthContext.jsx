@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -19,7 +19,7 @@ import { auth, db } from '../firebase'
 // ── Client-side auth rate limiter (5 attempts / 15 min / email) ──────────────
 const AUTH_RL_PREFIX = 'rd_auth_rl_'
 const AUTH_MAX_ATTEMPTS = 5
-const AUTH_WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+const AUTH_WINDOW_MS = 15 * 60 * 1000
 
 export function checkAuthRateLimit(email) {
   try {
@@ -74,14 +74,16 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchProfile = async (uid) => {
+  const fetchProfile = useCallback(async (uid) => {
     try {
       const snap = await getDoc(doc(db, 'users', uid))
-      if (snap.exists()) setUserProfile(snap.data())
+      if (snap.exists()) {
+        setUserProfile(snap.data())
+      }
     } catch (e) {
       console.error('Error fetching profile:', e)
     }
-  }
+  }, [])
 
   const signup = async (email, password, firstName, lastName = '') => {
     const cred = await createUserWithEmailAndPassword(auth, email, password)
@@ -91,7 +93,7 @@ export const AuthProvider = ({ children }) => {
       firstName,
       lastName,
       createdAt: serverTimestamp(),
-      settings: { soundcloudClientId: '' },
+      settings: {},
     })
     await fetchProfile(cred.user.uid)
     return cred
@@ -100,25 +102,39 @@ export const AuthProvider = ({ children }) => {
   const login = (email, password) =>
     signInWithEmailAndPassword(auth, email, password)
 
-  const logout = () => signOut(auth)
+  const logout = () => {
+    setUserProfile(null)
+    return signOut(auth)
+  }
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email)
 
   const updateUserProfile = async (data) => {
     if (!user) return
     await updateDoc(doc(db, 'users', user.uid), data)
-    setUserProfile((prev) => ({ ...prev, ...data }))
+    setUserProfile((prev) => ({ ...(prev || {}), ...data }))
   }
 
+  // Primary auth state listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u)
-      if (u) await fetchProfile(u.uid)
-      else setUserProfile(null)
+      if (u) {
+        await fetchProfile(u.uid)
+      } else {
+        setUserProfile(null)
+      }
       setLoading(false)
     })
     return unsub
-  }, [])
+  }, [fetchProfile])
+
+  // Retry profile fetch if user is authenticated but profile didn't load
+  useEffect(() => {
+    if (user && !userProfile && !loading) {
+      fetchProfile(user.uid)
+    }
+  }, [user, userProfile, loading, fetchProfile])
 
   return (
     <AuthContext.Provider

@@ -1,12 +1,13 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Search, Library, BarChart2 } from 'lucide-react'
+import { Home, Search, Library, BarChart2, User } from 'lucide-react'
 
 const NAV = [
-  { to: '/app/home', icon: Home, label: 'Home' },
-  { to: '/app/search', icon: Search, label: 'Search' },
-  { to: '/app/library', icon: Library, label: 'Library' },
-  { to: '/app/stats', icon: BarChart2, label: 'Stats' },
+  { to: '/app/home',     icon: Home,     label: 'Home'    },
+  { to: '/app/search',   icon: Search,   label: 'Search'  },
+  { to: '/app/library',  icon: Library,  label: 'Library' },
+  { to: '/app/stats',    icon: BarChart2, label: 'Stats'  },
+  { to: '/app/settings', icon: User,     label: 'Profile' },
 ]
 
 export default function MobileNav() {
@@ -35,19 +36,19 @@ export default function MobileNav() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '3px',
+            gap: '2px',
             color: isActive ? '#1E90FF' : '#666',
             textDecoration: 'none',
-            fontSize: '0.6rem',
+            fontSize: '0.58rem',
             fontWeight: 700,
-            letterSpacing: '0.04em',
+            letterSpacing: '0.03em',
             textTransform: 'uppercase',
-            padding: '4px 16px',
+            padding: '4px 8px',
             transition: 'color 0.15s',
-            minWidth: 60,
+            minWidth: 48,
           })}
         >
-          <Icon size={21} />
+          <Icon size={20} />
           <span>{label}</span>
         </NavLink>
       ))}

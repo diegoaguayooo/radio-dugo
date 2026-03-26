@@ -55,9 +55,11 @@ export default function Sidebar() {
       collection(db, 'users', user.uid, 'playlists'),
       orderBy('createdAt', 'desc')
     )
-    const unsub = onSnapshot(q, (snap) => {
-      setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    })
+    const unsub = onSnapshot(
+      q,
+      (snap) => setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => console.error('Playlist subscription error:', err)
+    )
     return unsub
   }, [user])
 

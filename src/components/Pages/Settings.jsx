@@ -1,33 +1,32 @@
-import React, { useState } from 'react'
-import { Settings as SettingsIcon, Key, User, Save, Check, ExternalLink, Eye, EyeOff, Info } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Settings as SettingsIcon, User, Save, Check } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { AVATARS, AvatarIcon } from '../shared/AvatarIcons'
 import { sanitizeName, LIMITS } from '../../utils/sanitize'
 
 export default function Settings() {
   const { user, userProfile, updateUserProfile } = useAuth()
-  const [clientId, setClientId] = useState(userProfile?.settings?.youtubeApiKey || '')
   const [firstName, setFirstName] = useState(userProfile?.firstName || '')
   const [lastName, setLastName] = useState(userProfile?.lastName || '')
-  const [showKey, setShowKey] = useState(false)
-  const [saved, setSaved] = useState(null) // 'profile' | 'api'
+  const [saved, setSaved] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState(userProfile?.avatarId || '')
+
+  // Sync form state if userProfile loads after initial render
+  useEffect(() => {
+    if (userProfile) {
+      setFirstName((prev) => prev || userProfile.firstName || '')
+      setLastName((prev) => prev || userProfile.lastName || '')
+      setSelectedAvatar((prev) => prev || userProfile.avatarId || '')
+    }
+  }, [userProfile])
 
   const saveProfile = async () => {
     const cleanFirst = sanitizeName(firstName)
     const cleanLast = sanitizeName(lastName)
     if (!cleanFirst) return
     await updateUserProfile({ firstName: cleanFirst, lastName: cleanLast, avatarId: selectedAvatar })
-    setSaved('profile')
-    setTimeout(() => setSaved(null), 2500)
-  }
-
-  const saveApiKey = async () => {
-    // API key: only allow safe printable ASCII, max 200 chars
-    const cleanKey = clientId.replace(/[^\x20-\x7E]/g, '').trim().slice(0, 200)
-    await updateUserProfile({ settings: { youtubeApiKey: cleanKey } })
-    setSaved('api')
-    setTimeout(() => setSaved(null), 2500)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   return (
@@ -87,52 +86,8 @@ export default function Settings() {
         </div>
         <Field label="Email" value={user?.email || ''} disabled type="email" hint="Email cannot be changed here" />
         <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <SaveBtn onClick={saveProfile} saved={saved === 'profile'} />
-          {saved === 'profile' && <span style={{ color: '#10B981', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Saved!</span>}
-        </div>
-      </Card>
-
-      {/* ─── YouTube API ─── */}
-      <Card>
-        <SectionHeader icon={<Key size={18} />} title="YouTube API Key" />
-        <div style={{ background: 'rgba(30,144,255,0.06)', border: '1px solid rgba(30,144,255,0.15)', borderRadius: '12px', padding: '16px 18px', marginBottom: '20px', display: 'flex', gap: '12px' }}>
-          <Info size={18} color="#1E90FF" style={{ flexShrink: 0, marginTop: '1px' }} />
-          <div>
-            <p style={{ color: '#ccc', fontSize: '0.88rem', lineHeight: 1.65 }}>
-              A <strong style={{ color: '#fff' }}>YouTube Data API v3</strong> key is required for Search.
-              Get a free key from{' '}
-              <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noreferrer" style={{ color: '#1E90FF', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                Google Cloud Console <ExternalLink size={12} />
-              </a>.
-            </p>
-            <ol style={{ color: '#888', fontSize: '0.82rem', lineHeight: 1.8, marginTop: '10px', paddingLeft: '20px' }}>
-              <li>Go to <strong style={{ color: '#ccc' }}>Google Cloud Console</strong> → create or select a project</li>
-              <li>Enable <strong style={{ color: '#ccc' }}>YouTube Data API v3</strong></li>
-              <li>Go to <strong style={{ color: '#ccc' }}>APIs & Services → Credentials</strong></li>
-              <li>Click <strong style={{ color: '#ccc' }}>Create Credentials → API key</strong></li>
-              <li>Copy the key and paste below</li>
-            </ol>
-          </div>
-        </div>
-        <div style={{ position: 'relative', marginBottom: '20px' }}>
-          <label style={{ display: 'block', color: '#777', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>API Key</label>
-          <div style={{ position: 'relative' }}>
-            <input
-              type={showKey ? 'text' : 'password'}
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              placeholder="Paste your YouTube Data API v3 key"
-              style={{ width: '100%', background: '#0d0d0d', border: '1px solid #222', borderRadius: '10px', padding: '12px 48px 12px 14px', color: '#fff', fontSize: '0.9rem', outline: 'none', fontFamily: showKey ? 'monospace' : 'inherit' }}
-            />
-            <button type="button" onClick={() => setShowKey((v) => !v)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#555', display: 'flex' }}>
-              {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-          {clientId && <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '6px' }}>{clientId.length} characters · ✓ Key entered</p>}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <SaveBtn onClick={saveApiKey} saved={saved === 'api'} label="Save API Key" />
-          {saved === 'api' && <span style={{ color: '#10B981', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Saved!</span>}
+          <SaveBtn onClick={saveProfile} saved={saved} />
+          {saved && <span style={{ color: '#10B981', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> Saved!</span>}
         </div>
       </Card>
 

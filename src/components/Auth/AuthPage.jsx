@@ -4,6 +4,7 @@ import { useAuth, checkAuthRateLimit, recordFailedAuthAttempt, clearAuthAttempts
 import { Eye, EyeOff, ArrowLeft, Music, Radio, Mic2, ListMusic } from 'lucide-react'
 import RadioDugoLogo from '../../assets/RadioDugoLogo'
 import { sanitizeEmail, sanitizeName, LIMITS } from '../../utils/sanitize'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const FEATURES = [
   { icon: Radio, text: 'Stream millions of tracks via YouTube' },
@@ -15,6 +16,7 @@ const FEATURES = [
 export default function AuthPage({ mode }) {
   const { login, signup, resetPassword } = useAuth()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
 
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' })
   const [showPass, setShowPass] = useState(false)
@@ -96,6 +98,121 @@ export default function AuthPage({ mode }) {
     }
   }
 
+  // ── Mobile: form-only single column ─────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div style={{ minHeight: '100dvh', background: '#080808', display: 'flex', flexDirection: 'column', padding: '0 24px 40px', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow */}
+        <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(30,144,255,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        {/* Top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0 28px' }}>
+          <button
+            onClick={() => navigate('/')}
+            style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <RadioDugoLogo size={28} />
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: '1rem', letterSpacing: '-0.02em' }}>Radio Dugo</span>
+          </div>
+          <div style={{ width: 60 }} />
+        </div>
+
+        {/* Form header */}
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ color: '#fff', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '6px' }}>
+            {forgotMode ? 'Reset password' : isSignup ? 'Create account' : 'Welcome back'}
+          </h2>
+          <p style={{ color: '#555', fontSize: '0.88rem' }}>
+            {forgotMode ? "We'll send a reset link to your inbox." : isSignup ? "Join Radio Dugo. It's free." : 'Sign in to pick up where you left off.'}
+          </p>
+        </div>
+
+        {/* Form card */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', padding: '28px 24px' }}>
+          <form onSubmit={handleSubmit} noValidate>
+            {isSignup && !forgotMode && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                <AuthField label="First Name" value={form.firstName} onChange={set('firstName')} placeholder="Name" autoFocus maxLength={LIMITS.NAME} />
+                <AuthField label="Last Name" value={form.lastName} onChange={set('lastName')} placeholder="Last name" maxLength={LIMITS.NAME} />
+              </div>
+            )}
+            <div style={{ marginBottom: '16px' }}>
+              <AuthField label="Email" type="email" value={form.email} onChange={set('email')} placeholder="you@email.com" autoFocus={!isSignup} maxLength={LIMITS.EMAIL} />
+            </div>
+            {!forgotMode && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={set('password')}
+                    placeholder="••••••••"
+                    required
+                    maxLength={LIMITS.PASSWORD}
+                    style={inputStyle}
+                    onFocus={(e) => { e.target.style.borderColor = '#1E90FF'; e.target.style.boxShadow = '0 0 0 3px rgba(30,144,255,0.12)' }}
+                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none' }}
+                  />
+                  <button type="button" onClick={() => setShowPass((v) => !v)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#555', display: 'flex' }}>
+                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            )}
+            {isSignup && !forgotMode && (
+              <div style={{ marginBottom: '24px' }}>
+                <AuthField label="Confirm Password" type="password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••" maxLength={LIMITS.PASSWORD} />
+              </div>
+            )}
+            {!isSignup && !forgotMode && (
+              <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '20px' }}>
+                <button type="button" onClick={() => { setForgotMode(true); setError(''); setInfo(''); setLockedUntil(null) }} style={{ background: 'none', border: 'none', color: '#1E90FF', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  Forgot password?
+                </button>
+              </div>
+            )}
+            {error && (
+              <div style={{ background: lockedUntil ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${lockedUntil ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.2)'}`, borderRadius: '10px', padding: '12px 14px', marginBottom: '16px', color: lockedUntil ? '#fbbf24' : '#f87171', fontSize: '0.85rem' }}>
+                {error}
+              </div>
+            )}
+            {info && (
+              <div style={{ background: 'rgba(30,144,255,0.08)', border: '1px solid rgba(30,144,255,0.2)', borderRadius: '10px', padding: '12px 14px', marginBottom: '16px', color: '#60a5fa', fontSize: '0.85rem' }}>
+                {info}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading || !!lockedUntil}
+              style={{ width: '100%', background: (loading || lockedUntil) ? 'rgba(30,144,255,0.35)' : 'linear-gradient(135deg, #1E90FF 0%, #1260b0 100%)', color: '#fff', border: 'none', padding: '15px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 700, cursor: (loading || lockedUntil) ? 'not-allowed' : 'pointer', marginBottom: forgotMode ? '10px' : '0' }}
+            >
+              {loading ? 'Please wait…' : lockedUntil ? `Locked for ${lockedUntil}m` : forgotMode ? 'Send Reset Email' : isSignup ? 'Create Account' : 'Sign In'}
+            </button>
+            {forgotMode && (
+              <button type="button" onClick={() => { setForgotMode(false); setError(''); setInfo(''); setLockedUntil(null) }} style={{ width: '100%', background: 'none', border: 'none', color: '#555', fontSize: '0.85rem', cursor: 'pointer', padding: '10px', marginTop: '4px' }}>
+                ← Back to login
+              </button>
+            )}
+          </form>
+        </div>
+
+        {!forgotMode && (
+          <p style={{ color: '#444', fontSize: '0.85rem', marginTop: '20px', textAlign: 'center' }}>
+            {isSignup ? 'Already have an account? ' : "Don't have an account? "}
+            <Link to={isSignup ? '/login' : '/signup'} style={{ color: '#1E90FF', textDecoration: 'none', fontWeight: 600 }}>
+              {isSignup ? 'Sign In' : 'Create one'}
+            </Link>
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // ── Desktop: two-column layout ───────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#080808', overflow: 'hidden', position: 'relative' }}>
       {/* ── Ambient orbs ── */}
