@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #111111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #1E90FF; }
+
+/* Range input */
+input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #2a2a2a;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  margin-top: -4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.progress-bar:hover input[type='range']::-webkit-slider-thumb,
+input[type='range'].volume-slider::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+input[type='range'].volume-slider::-webkit-slider-thumb {
+  opacity: 1;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  margin-top: -3px;
+}
+
+/* Custom utilities */
+.text-gradient {
+  background: linear-gradient(135deg, #1E90FF, #00cfff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glow-blue {
+  box-shadow: 0 0 30px rgba(30, 144, 255, 0.25);
+}
+
+/* Track progress bar accent fill */
+.progress-track {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: #2a2a2a;
+  cursor: pointer;
+}
+
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 2px;
+  background: #1E90FF;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+.progress-track:hover .progress-fill {
+  background: #3aa3ff;
+}
+
+/* Sidebar active link */
+.nav-link {
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary text-sm font-medium transition-all duration-150 hover:text-white hover:bg-surface-3 cursor-pointer;
+}
+
+.nav-link.active {
+  @apply text-white bg-surface-3;
+}
+
+/* Card hover */
+.music-card {
+  @apply bg-surface-2 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:bg-surface-3;
+}
+
+/* Spinning album art */
+.spinning {
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollytelling */
+.landing-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Waveform bars animation */
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+
+.wave-bar {
+  width: 3px;
+  background: #1E90FF;
+  border-radius: 2px;
+  transform-origin: bottom;
+  animation: wave 1s ease-in-out infinite;
+}
+
+/* Scroll indicator bounce */
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* ── Custom button tooltips ─────────────────────────────── */
+button[title] {
+  position: relative;
+}
+
+button[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 18, 18, 0.96);
+  color: #e0e0e0;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 0.71rem;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
+  border: 1px solid #2a2a2a;
+  letter-spacing: 0.02em;
+  animation: tooltip-in 0.15s ease forwards;
+}
+
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Daily Mix modal slide-up ───────────────────────────── */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
