@@ -207,3 +207,27 @@ button[title]:hover::after {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
+
+/* ── Mobile / touch improvements ───────────────────────── */
+@media (max-width: 767px) {
+  /* Prevent text size inflation on iOS */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Improve tap responsiveness on all buttons/links */
+  button, a {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Tighten section headings */
+  h1 { font-size: clamp(1.4rem, 6vw, 2rem) !important; }
+  h2 { font-size: clamp(1.1rem, 4.5vw, 1.5rem) !important; }
+
+  /* Make music cards stack tighter */
+  .music-card { padding: 12px; }
+
+  /* Hide desktop-only tooltips on touch */
+  button[title]:hover::after { display: none; }
+}

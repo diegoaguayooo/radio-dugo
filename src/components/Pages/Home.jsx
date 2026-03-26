@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Play, Pause, Heart, Clock, Library, TrendingUp, Music2, X, Shuffle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { db } from '../../firebase'
 import { collection, query, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore'
 import TrackCard from '../shared/TrackCard'
@@ -206,9 +207,10 @@ export default function Home() {
   }, [currentTrack?.artist, currentTrack?.id, userProfile?.settings?.youtubeApiKey])
 
   const greeting = getGreeting(userProfile?.firstName)
+  const isMobile = useIsMobile()
 
   return (
-    <div style={{ padding: '32px 32px 40px', maxWidth: '1400px' }}>
+    <div style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1400px' }}>
       {/* Greeting */}
       <h1 style={{ color: '#fff', fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, marginBottom: '32px', letterSpacing: '-0.02em' }}>
         {greeting}

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import {
   Play,
   Pause,
@@ -100,8 +101,69 @@ export default function PlayerBar() {
 
   const VolumeIcon = volume === 0 ? VolumeX : volume < 40 ? Volume1 : Volume2
   const liked = currentTrack ? isLiked(currentTrack.id) : false
+  const isMobile = useIsMobile()
 
   const artwork = currentTrack?.artwork_url || null
+
+  // ─── Mobile compact player ───────────────────────────────────────
+  if (isMobile) {
+    return (
+      <div style={{ position: 'fixed', bottom: '60px', left: 0, right: 0, zIndex: 98 }}>
+        {/* Thin progress strip */}
+        <div style={{ height: '3px', background: '#1a1a1a' }}>
+          <div style={{ width: `${progress}%`, height: '100%', background: '#1E90FF', transition: 'width 0.1s linear' }} />
+        </div>
+        {/* Bar */}
+        <div style={{
+          height: '72px',
+          background: '#0d0d0d',
+          borderTop: '1px solid #1e1e1e',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 16px',
+          gap: '10px',
+        }}>
+          {/* Artwork */}
+          <div style={{ width: 46, height: 46, borderRadius: 8, flexShrink: 0, overflow: 'hidden', background: '#1a1a1a', border: '1px solid #222', position: 'relative' }}>
+            {artwork && (
+              <img src={artwork} alt={currentTrack?.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </div>
+          {/* Title / artist */}
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <p style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {currentTrack?.title}
+            </p>
+            <p style={{ color: '#666', fontSize: '0.73rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>
+              {currentTrack?.artist}
+            </p>
+          </div>
+          {/* Like */}
+          <button onClick={() => toggleLike(currentTrack)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: liked ? '#1E90FF' : '#555', display: 'flex', padding: '8px', flexShrink: 0 }}>
+            <Heart size={18} fill={liked ? '#1E90FF' : 'none'} />
+          </button>
+          {/* Prev */}
+          <button onClick={skipPrev} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', display: 'flex', padding: '8px', flexShrink: 0 }}>
+            <SkipBack size={22} />
+          </button>
+          {/* Play / Pause */}
+          <button
+            onClick={togglePlay}
+            style={{ width: 42, height: 42, borderRadius: '50%', background: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            {isPlaying
+              ? <Pause size={18} color="#000" fill="#000" />
+              : <Play size={18} color="#000" fill="#000" style={{ marginLeft: '2px' }} />
+            }
+          </button>
+          {/* Next */}
+          <button onClick={skipNext} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', display: 'flex', padding: '8px', flexShrink: 0 }}>
+            <SkipForward size={22} />
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div

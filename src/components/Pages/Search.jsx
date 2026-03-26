@@ -3,6 +3,7 @@ import { Search as SearchIcon, X, AlertCircle, Music2, Clock } from 'lucide-reac
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlayer } from '../../contexts/PlayerContext'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import TrackRow from '../shared/TrackRow'
 
 const RECENT_KEY = 'radio_dugo_recent_searches'
@@ -44,6 +45,7 @@ const GENRES = [
 export default function Search() {
   const { userProfile } = useAuth()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -176,7 +178,7 @@ export default function Search() {
   }
 
   return (
-    <div style={{ padding: '32px 32px 40px', maxWidth: '1000px' }}>
+    <div style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1000px' }}>
       <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, marginBottom: '24px', letterSpacing: '-0.02em' }}>
         Search
       </h1>
