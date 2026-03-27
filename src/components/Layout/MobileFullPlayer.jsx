@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import {
   Heart, SkipBack, SkipForward, Play, Pause,
   Shuffle, Repeat, Repeat1,
-  ChevronDown, ListMusic, Mic2,
+  ChevronDown, ListMusic,
 } from 'lucide-react'
 import { usePlayer } from '../../contexts/PlayerContext'
 
@@ -18,7 +18,7 @@ export default function MobileFullPlayer({ onClose }) {
     currentTrack, isPlaying, progress, duration, currentPos,
     shuffle, repeat, togglePlay, skipNext, skipPrev, seekTo,
     toggleShuffle, toggleRepeat, isLiked, toggleLike,
-    showQueue, setShowQueue, showLyrics, setShowLyrics,
+    showQueue, setShowQueue,
   } = usePlayer()
 
   const progressRef = useRef(null)
@@ -201,13 +201,6 @@ export default function MobileFullPlayer({ onClose }) {
 
       {/* ── Extra buttons ───────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '36px' }}>
-        <button
-          onClick={() => setShowLyrics((v) => !v)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: showLyrics ? '#1E90FF' : '#555', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', touchAction: 'manipulation' }}
-        >
-          <Mic2 size={22} />
-          <span>Lyrics</span>
-        </button>
         <button
           onClick={() => setShowQueue((v) => !v)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: showQueue ? '#1E90FF' : '#555', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', touchAction: 'manipulation' }}

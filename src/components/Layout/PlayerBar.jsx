@@ -14,7 +14,6 @@ import {
   Volume1,
   Heart,
   ListMusic,
-  Mic2,
 } from 'lucide-react'
 import { usePlayer } from '../../contexts/PlayerContext'
 
@@ -46,8 +45,6 @@ export default function PlayerBar() {
     toggleLike,
     showQueue,
     setShowQueue,
-    showLyrics,
-    setShowLyrics,
   } = usePlayer()
 
   const [prevVol, setPrevVol] = useState(70)
@@ -335,15 +332,6 @@ export default function PlayerBar() {
 
       {/* ─── Right: volume + extras ─── */}
       <div style={{ flex: '0 0 260px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'flex-end' }}>
-        {/* Lyrics toggle */}
-        <ControlBtn
-          onClick={() => setShowLyrics((v) => !v)}
-          active={showLyrics}
-          title="Lyrics"
-        >
-          <Mic2 size={18} />
-        </ControlBtn>
-
         {/* Queue toggle */}
         <ControlBtn
           onClick={() => setShowQueue((v) => !v)}

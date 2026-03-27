@@ -10,11 +10,11 @@ import TrackCard from '../shared/TrackCard'
 
 const getGreeting = (firstName) => {
   const h = new Date().getHours()
-  const name = firstName || 'Name'
-  if (h >= 5 && h < 12) return `Good morning, ${name}.`
-  if (h >= 12 && h < 17) return `Good afternoon, ${name}.`
-  if (h >= 17 && h < 22) return `Good evening, ${name}.`
-  return `Welcome back, ${name}.`
+  const suffix = firstName ? `, ${firstName}.` : '.'
+  if (h >= 5 && h < 12) return `Good morning${suffix}`
+  if (h >= 12 && h < 17) return `Good afternoon${suffix}`
+  if (h >= 17 && h < 22) return `Good evening${suffix}`
+  return `Welcome back${suffix}`
 }
 
 // Featured demo tracks (YouTube video IDs)

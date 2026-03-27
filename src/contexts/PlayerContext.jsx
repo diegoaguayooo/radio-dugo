@@ -51,7 +51,6 @@ export const PlayerProvider = ({ children }) => {
   const [playerReady, setPlayerReady] = useState(false)
   const [likedIds, setLikedIds] = useState(new Set())
   const [showQueue, setShowQueue] = useState(false)
-  const [showLyrics, setShowLyrics] = useState(false)
   const [djEnabled, setDjEnabled] = useState(false)
 
   const toggleDJ = useCallback(() => setDjEnabled((v) => !v), [])
@@ -403,8 +402,6 @@ export const PlayerProvider = ({ children }) => {
         setQueue,
         setQueueIndex,
         setShowQueue,
-        showLyrics,
-        setShowLyrics,
         djEnabled,
         toggleDJ,
         loadLikedIds,

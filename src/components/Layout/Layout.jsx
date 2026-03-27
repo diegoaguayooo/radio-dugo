@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import PlayerBar from './PlayerBar'
 import QueuePanel from './QueuePanel'
-import LyricsPanel from './LyricsPanel'
 import DJDugo from './DJDugo'
 import MobileNav from './MobileNav'
 import MobileHeader from './MobileHeader'
@@ -12,7 +11,7 @@ import { usePlayer } from '../../contexts/PlayerContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 export default function Layout() {
-  const { currentTrack, showQueue, showLyrics } = usePlayer()
+  const { currentTrack, showQueue } = usePlayer()
   const isMobile = useIsMobile()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
@@ -44,9 +43,6 @@ export default function Layout() {
           <Outlet />
         </div>
       </div>
-
-      {/* Lyrics panel */}
-      {showLyrics && <LyricsPanel />}
 
       {/* Queue panel */}
       {showQueue && <QueuePanel />}
