@@ -4,7 +4,7 @@ import { usePlayer } from '../../contexts/PlayerContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { db } from '../../firebase'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { collection, query, orderBy, getDocs, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 
 const fmt = (ms) => {
   if (!ms) return '--:--'
