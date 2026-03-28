@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Play, Pause, Heart, Clock, Library, TrendingUp, Music2, X, Shuffle } from 'lucide-react'
+import { PlaylistIcon } from '../shared/PlaylistIcons'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePlayer } from '../../contexts/PlayerContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
