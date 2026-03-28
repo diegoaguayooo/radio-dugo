@@ -146,7 +146,7 @@ export default function Library() {
             {/* Cover */}
             <div style={{ width: '100%', paddingTop: '100%', background: '#1a1a1a', borderRadius: '10px', marginBottom: '14px', position: 'relative', overflow: 'hidden', border: '1px solid #222' }}>
               {pl.iconId
-                ? <div style={{ position: 'absolute', inset: 0 }}><PlaylistIcon id={pl.iconId} size="100%" style={{ width: '100%', height: '100%', borderRadius: 0 }} /></div>
+                ? <PlaylistIcon id={pl.iconId} size={200} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', borderRadius: 0 }} />
                 : pl.coverUrl
                   ? <img src={pl.coverUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Music2 size={32} color="#2a2a2a" /></div>
