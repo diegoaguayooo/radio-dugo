@@ -27,6 +27,17 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
   const menuRef = useRef(null)
   const plusBtnRef = useRef(null)
 
+  // Pre-load playlists so the menu opens instantly
+  useEffect(() => {
+    if (!user) return
+    const unsub = onSnapshot(
+      query(collection(db, 'users', user.uid, 'playlists'), orderBy('createdAt', 'desc')),
+      (snap) => setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      () => {}
+    )
+    return unsub
+  }, [user])
+
   const handlePlay = () => {
     if (isActive) togglePlay()
     else playTrack(track, queue || [track], index ?? 0)
