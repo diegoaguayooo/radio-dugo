@@ -311,11 +311,11 @@ export const PlayerProvider = ({ children }) => {
       const id = String(track.id)
       const ref = doc(db, 'users', user.uid, 'likedSongs', id)
       if (likedIds.has(id)) {
-        await deleteDoc(ref)
         setLikedIds((prev) => { const s = new Set(prev); s.delete(id); return s })
+        await deleteDoc(ref)
       } else {
-        await setDoc(ref, { ...track, likedAt: new Date() })
         setLikedIds((prev) => new Set([...prev, id]))
+        await setDoc(ref, { ...track, likedAt: new Date() })
       }
     },
     [user, likedIds]
