@@ -65,13 +65,12 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
     setShowMenu(true)
   }
 
-  const addToPlaylist = async (e, pl) => {
+  const addToPlaylist = (e, pl) => {
     e.stopPropagation()
     e.preventDefault()
+    setShowMenu(false)
     const tracks = [...(pl.tracks || []), track]
-    await updateDoc(doc(db, 'users', user.uid, 'playlists', pl.id), { tracks })
-    setAdded(pl.id)
-    setTimeout(() => { setShowMenu(false); setAdded(null) }, 800)
+    updateDoc(doc(db, 'users', user.uid, 'playlists', pl.id), { tracks }).catch(() => {})
   }
 
   // Close on outside click/tap
