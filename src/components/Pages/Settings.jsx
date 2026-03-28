@@ -30,8 +30,8 @@ export default function Settings() {
     const cleanLast = sanitizeName(lastName)
     await updateUserProfile({ firstName: cleanFirst, lastName: cleanLast, avatarId: selectedAvatar })
     setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
     if (isMobile) setEditMode(false)
+    setTimeout(() => setSaved(false), 2800)
   }
 
   const handleLogout = async () => {
@@ -47,6 +47,19 @@ export default function Settings() {
   if (isMobile) {
     return (
       <div style={{ padding: '20px 16px 40px', maxWidth: '600px' }}>
+        {/* Save toast */}
+        {saved && (
+          <div style={{
+            position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)',
+            background: '#10B981', color: '#fff', fontWeight: 700, fontSize: '0.9rem',
+            padding: '12px 24px', borderRadius: '50px', zIndex: 9999,
+            boxShadow: '0 4px 20px rgba(16,185,129,0.4)',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            animation: 'toast-in 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards',
+          }}>
+            <Check size={16} /> Profile saved!
+          </div>
+        )}
         {/* Profile card */}
         <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: '18px', padding: '28px 24px', marginBottom: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           {/* Avatar */}

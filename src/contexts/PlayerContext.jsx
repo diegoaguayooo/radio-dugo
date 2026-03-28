@@ -15,6 +15,7 @@ import {
   query,
   orderBy,
   getDocs,
+  onSnapshot,
   deleteDoc,
   where,
 } from 'firebase/firestore'
@@ -291,19 +292,16 @@ export const PlayerProvider = ({ children }) => {
     })
   }, [])
 
-  // ─── Liked songs ──────────────────────────────────────────────────────────
-  const loadLikedIds = useCallback(async () => {
-    if (!user) return
-    try {
-      const snap = await getDocs(collection(db, 'users', user.uid, 'likedSongs'))
-      setLikedIds(new Set(snap.docs.map((d) => d.id)))
-    } catch (_) {}
-  }, [user])
-
+  // ─── Liked songs — real-time onSnapshot keeps heart state always in sync ──
   useEffect(() => {
-    if (user) loadLikedIds()
-    else setLikedIds(new Set())
-  }, [user, loadLikedIds])
+    if (!user) { setLikedIds(new Set()); return }
+    const unsub = onSnapshot(
+      collection(db, 'users', user.uid, 'likedSongs'),
+      (snap) => setLikedIds(new Set(snap.docs.map((d) => d.id))),
+      () => {}
+    )
+    return unsub
+  }, [user])
 
   const isLiked = useCallback((trackId) => likedIds.has(String(trackId)), [likedIds])
 
@@ -316,7 +314,7 @@ export const PlayerProvider = ({ children }) => {
         await deleteDoc(ref)
         setLikedIds((prev) => { const s = new Set(prev); s.delete(id); return s })
       } else {
-        await setDoc(ref, { ...track, likedAt: serverTimestamp() })
+        await setDoc(ref, { ...track, likedAt: new Date() })
         setLikedIds((prev) => new Set([...prev, id]))
       }
     },
@@ -404,7 +402,6 @@ export const PlayerProvider = ({ children }) => {
         setShowQueue,
         djEnabled,
         toggleDJ,
-        loadLikedIds,
       }}
     >
       {children}

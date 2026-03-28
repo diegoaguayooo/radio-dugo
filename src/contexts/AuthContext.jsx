@@ -11,6 +11,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  onSnapshot,
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore'
@@ -91,9 +92,7 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = useCallback(async (uid) => {
     try {
       const snap = await getDoc(doc(db, 'users', uid))
-      if (snap.exists()) {
-        setUserProfile(snap.data())
-      }
+      if (snap.exists()) setUserProfile(snap.data())
     } catch (e) {
       console.error('Error fetching profile:', e)
     }
@@ -148,12 +147,16 @@ export const AuthProvider = ({ children }) => {
     return () => { clearTimeout(failsafe); unsub() }
   }, [fetchProfile])
 
-  // Retry profile fetch if user is authenticated but profile didn't load
+  // Real-time profile listener — keeps avatar, name, etc. always in sync
   useEffect(() => {
-    if (user && !userProfile && !loading) {
-      fetchProfile(user.uid)
-    }
-  }, [user, userProfile, loading, fetchProfile])
+    if (!user) return
+    const unsub = onSnapshot(
+      doc(db, 'users', user.uid),
+      (snap) => { if (snap.exists()) setUserProfile(snap.data()) },
+      () => {} // silent fail — fetchProfile retry covers this
+    )
+    return unsub
+  }, [user])
 
   return (
     <AuthContext.Provider
