@@ -27,13 +27,6 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
   const menuRef = useRef(null)
   const plusBtnRef = useRef(null)
 
-  // Load playlists once on mount from local cache — instant, no persistent listener per row
-  useEffect(() => {
-    if (!user) return
-    getDocs(query(collection(db, 'users', user.uid, 'playlists'), orderBy('createdAt', 'desc')))
-      .then((snap) => setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
-      .catch(() => {})
-  }, [user])
 
   const handlePlay = () => {
     if (isActive) togglePlay()
