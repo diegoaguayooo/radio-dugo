@@ -521,12 +521,12 @@ function PlaylistCard({ playlist, onClick }) {
       onMouseLeave={(e) => (e.currentTarget.style.background = '#111')}
     >
       <div style={{ width: '100%', paddingTop: '100%', background: '#1a1a1a', borderRadius: '10px', marginBottom: '12px', position: 'relative', overflow: 'hidden', border: '1px solid #222' }}>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {playlist.coverUrl
+        {playlist.iconId
+          ? <PlaylistIcon id={playlist.iconId} size={200} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', borderRadius: 0 }} />
+          : playlist.coverUrl
             ? <img src={playlist.coverUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <Library size={28} color="#333" />
-          }
-        </div>
+            : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Library size={28} color="#333" /></div>
+        }
       </div>
       <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{playlist.name}</p>
       <p style={{ color: '#555', fontSize: '0.78rem', marginTop: '4px' }}>{(playlist.tracks || []).length} tracks</p>
