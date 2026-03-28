@@ -41,6 +41,11 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
     if (!user) return
     if (showMenu) { setShowMenu(false); return }
 
+    // Lazy-load playlists from Firestore local cache — instant, no network round-trip
+    getDocs(query(collection(db, 'users', user.uid, 'playlists'), orderBy('createdAt', 'desc')))
+      .then((snap) => setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      .catch(() => {})
+
     // Position dropdown relative to viewport so it never clips
     if (plusBtnRef.current) {
       const rect = plusBtnRef.current.getBoundingClientRect()
