@@ -129,7 +129,7 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
           </p>
         </div>
 
-        {/* Action buttons — clearly separated, large tap targets */}
+        {/* Action buttons + dropdown — all inside menuRef so close handler works */}
         <div ref={menuRef} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
           <button
             onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); toggleLike(track) }}
@@ -157,51 +157,52 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
               <Plus size={19} />
             </button>
           </span>
-        </div>
 
-        {/* Playlist dropdown — fixed to viewport */}
-        {showMenu && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'fixed',
-              top: menuPos.top,
-              bottom: menuPos.bottom,
-              right: 12,
-              background: '#1e1e1e',
-              border: '1px solid #2a2a2a',
-              borderRadius: '12px',
-              minWidth: '210px',
-              zIndex: 2000,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
-              overflow: 'hidden',
-            }}
-          >
-            <p style={{ color: '#555', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '12px 16px 6px' }}>
-              Add to playlist
-            </p>
-            {playlists.length === 0 ? (
-              <p style={{ color: '#444', fontSize: '0.82rem', padding: '8px 16px 14px' }}>No playlists yet</p>
-            ) : (
-              playlists.map((pl) => (
-                <button
-                  key={pl.id}
-                  onTouchEnd={(e) => { e.stopPropagation(); addToPlaylist(e, pl) }}
-                  onClick={(e) => addToPlaylist(e, pl)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-                    padding: '14px 16px', color: added === pl.id ? '#1E90FF' : '#ccc',
-                    fontSize: '0.9rem', textAlign: 'left', minHeight: 48,
-                  }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pl.name}</span>
-                  {added === pl.id && <Check size={14} color="#1E90FF" />}
-                </button>
-              ))
-            )}
-          </div>
-        )}
+          {/* Playlist dropdown — fixed to viewport, inside menuRef so outside-tap detection works */}
+          {showMenu && (
+            <div
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'fixed',
+                top: menuPos.top,
+                bottom: menuPos.bottom,
+                right: 12,
+                background: '#1e1e1e',
+                border: '1px solid #2a2a2a',
+                borderRadius: '12px',
+                minWidth: '210px',
+                zIndex: 2000,
+                boxShadow: '0 12px 40px rgba(0,0,0,0.8)',
+                overflow: 'hidden',
+              }}
+            >
+              <p style={{ color: '#555', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '12px 16px 6px' }}>
+                Add to playlist
+              </p>
+              {playlists.length === 0 ? (
+                <p style={{ color: '#444', fontSize: '0.82rem', padding: '8px 16px 14px' }}>No playlists yet</p>
+              ) : (
+                playlists.map((pl) => (
+                  <button
+                    key={pl.id}
+                    onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); addToPlaylist(e, pl) }}
+                    onClick={(e) => { e.stopPropagation(); addToPlaylist(e, pl) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '14px 16px', color: added === pl.id ? '#1E90FF' : '#ccc',
+                      fontSize: '0.9rem', textAlign: 'left', minHeight: 48,
+                    }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pl.name}</span>
+                    {added === pl.id && <Check size={14} color="#1E90FF" />}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
     )
   }
