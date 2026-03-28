@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Library as LibraryIcon, Music2, Trash2 } from 'lucide-react'
+import { PlaylistIcon } from '../shared/PlaylistIcons'
 import { useAuth } from '../../contexts/AuthContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { db } from '../../firebase'
