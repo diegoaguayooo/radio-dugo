@@ -52,23 +52,25 @@ export default function MobileFullPlayer({ onClose }) {
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: '#080808',
+        background: 'rgba(6,6,8,0.92)',
         display: 'flex',
         flexDirection: 'column',
         padding: '0 28px 36px',
-        animation: 'slideUp 0.3s ease forwards',
+        animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards',
         overflowY: 'auto',
         overscrollBehavior: 'contain',
       }}
     >
-      {/* Blurred artwork background */}
+      {/* Blurred artwork background — more vibrant */}
       {artwork && (
         <div style={{ position: 'fixed', inset: 0, zIndex: -1, overflow: 'hidden', pointerEvents: 'none' }}>
           <img
             src={artwork}
             alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(70px) saturate(1.4)', opacity: 0.18, transform: 'scale(1.3)' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(60px) saturate(2.2)', opacity: 0.28, transform: 'scale(1.4)' }}
           />
+          {/* Darken overlay so text stays readable */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,6,8,0.55) 0%, rgba(6,6,8,0.75) 60%, rgba(6,6,8,0.92) 100%)' }} />
         </div>
       )}
 
@@ -96,8 +98,8 @@ export default function MobileFullPlayer({ onClose }) {
         background: '#1a1a1a',
         marginTop: '20px',
         marginBottom: '28px',
-        boxShadow: '0 28px 64px rgba(0,0,0,0.65)',
-        border: '1px solid #222',
+        boxShadow: '0 32px 72px rgba(0,0,0,0.8), 0 0 60px rgba(30,144,255,0.15)',
+        border: '1px solid rgba(255,255,255,0.07)',
         flexShrink: 0,
       }}>
         {artwork && (
@@ -120,10 +122,13 @@ export default function MobileFullPlayer({ onClose }) {
           </p>
         </div>
         <button
-          onClick={() => toggleLike(currentTrack)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: liked ? '#1E90FF' : '#555', display: 'flex', padding: '8px', flexShrink: 0, transition: 'color 0.2s, transform 0.15s' }}
-          onTouchStart={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
-          onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onClick={(e) => {
+            toggleLike(currentTrack)
+            e.currentTarget.classList.remove('like-pop')
+            void e.currentTarget.offsetWidth
+            e.currentTarget.classList.add('like-pop')
+          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: liked ? '#1E90FF' : '#666', display: 'flex', padding: '8px', flexShrink: 0, transition: 'color 0.2s' }}
         >
           <Heart size={26} fill={liked ? '#1E90FF' : 'none'} />
         </button>
@@ -137,7 +142,7 @@ export default function MobileFullPlayer({ onClose }) {
           onTouchMove={handleProgressTouch}
           style={{ height: '5px', background: '#2a2a2a', borderRadius: '3px', position: 'relative', touchAction: 'none', marginBottom: '10px' }}
         >
-          <div style={{ width: `${progress}%`, height: '100%', background: '#1E90FF', borderRadius: '3px', transition: 'width 0.1s linear' }} />
+          <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #1E90FF, #38b6ff)', borderRadius: '3px', transition: 'width 0.1s linear' }} />
           <div style={{
             position: 'absolute', top: '50%', left: `${progress}%`,
             transform: 'translate(-50%, -50%)',

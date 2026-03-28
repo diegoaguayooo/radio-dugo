@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { BarChart2, Music2, Heart, ListMusic, Users, Clock, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { db } from '../../firebase'
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore'
 
 export default function Stats() {
   const { user, userProfile } = useAuth()
@@ -13,23 +13,25 @@ export default function Stats() {
 
   useEffect(() => {
     if (!user) return
-    const fetchAll = async () => {
-      try {
-        const [recentSnap, likedSnap, playlistSnap] = await Promise.all([
-          getDocs(query(collection(db, 'users', user.uid, 'recentlyPlayed'), orderBy('playedAt', 'desc'), limit(50))),
-          getDocs(collection(db, 'users', user.uid, 'likedSongs')),
-          getDocs(collection(db, 'users', user.uid, 'playlists')),
-        ])
-        setRecentPlays(recentSnap.docs.map((d) => ({ ...d.data(), _id: d.id })))
-        setLikedCount(likedSnap.size)
-        setPlaylistCount(playlistSnap.size)
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchAll()
+    let resolvedCount = 0
+    const resolve = () => { if (++resolvedCount >= 3) setLoading(false) }
+
+    const unsubRecent = onSnapshot(
+      query(collection(db, 'users', user.uid, 'recentlyPlayed'), orderBy('playedAt', 'desc'), limit(50)),
+      (snap) => { setRecentPlays(snap.docs.map((d) => ({ ...d.data(), _id: d.id }))); resolve() },
+      (err) => { console.error(err); resolve() }
+    )
+    const unsubLiked = onSnapshot(
+      collection(db, 'users', user.uid, 'likedSongs'),
+      (snap) => { setLikedCount(snap.size); resolve() },
+      (err) => { console.error(err); resolve() }
+    )
+    const unsubPlaylists = onSnapshot(
+      collection(db, 'users', user.uid, 'playlists'),
+      (snap) => { setPlaylistCount(snap.size); resolve() },
+      (err) => { console.error(err); resolve() }
+    )
+    return () => { unsubRecent(); unsubLiked(); unsubPlaylists() }
   }, [user])
 
   // Compute top artists from recently played
@@ -45,23 +47,42 @@ export default function Stats() {
   const totalListenMs = recentPlays.reduce((acc, t) => acc + (t.duration || 0), 0)
   const totalMinutes = Math.round(totalListenMs / 60000)
 
+  // Build a 7-day sparkline for songs played per day
+  const dayMap = {}
+  const now = Date.now()
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now - i * 86400000)
+    dayMap[d.toDateString()] = 0
+  }
+  recentPlays.forEach((t) => {
+    if (!t.playedAt) return
+    const ts = t.playedAt.toDate ? t.playedAt.toDate() : new Date(t.playedAt)
+    const key = ts.toDateString()
+    if (key in dayMap) dayMap[key]++
+  })
+  const sparkData = Object.values(dayMap)
+  const sparkMax = Math.max(...sparkData, 1)
+
   if (loading) {
     return (
-      <div style={{ padding: '60px 32px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#1E90FF', animation: `pulse-glow 0.8s ease-in-out ${i * 0.15}s infinite` }} />
-        ))}
-        <span style={{ color: '#555', fontSize: '0.85rem', marginLeft: '8px' }}>Loading your stats…</span>
+      <div className="page-enter" style={{ padding: '60px 32px' }}>
+        {/* Skeleton cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '14px', marginBottom: '32px' }}>
+          {[0,1,2,3,4].map((i) => (
+            <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '16px' }} />
+          ))}
+        </div>
+        <div className="skeleton" style={{ height: '200px', borderRadius: '16px' }} />
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 32px 60px', maxWidth: '900px' }}>
+    <div className="page-enter" style={{ padding: '32px 32px 60px', maxWidth: '900px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
         <BarChart2 size={26} color="#1E90FF" />
-        <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+        <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em', fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>
           Your Stats
         </h1>
       </div>
@@ -71,7 +92,7 @@ export default function Stats() {
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '14px', marginBottom: '48px' }}>
-        <StatCard icon={<Music2 size={20} />} label="Songs Played" value={recentPlays.length} sub="recently tracked" color="#1E90FF" />
+        <StatCard icon={<Music2 size={20} />} label="Songs Played" value={recentPlays.length} sub="recently tracked" color="#1E90FF" sparkData={sparkData} sparkMax={sparkMax} />
         <StatCard icon={<Heart size={20} />} label="Liked Songs" value={likedCount} sub="in your library" color="#EC4899" />
         <StatCard icon={<ListMusic size={20} />} label="Playlists" value={playlistCount} sub="created" color="#8B5CF6" />
         <StatCard icon={<Users size={20} />} label="Artists" value={Object.keys(artistMap).length} sub="in recent plays" color="#10B981" />
@@ -91,11 +112,11 @@ export default function Stats() {
         <div style={{ marginBottom: '48px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <TrendingUp size={18} color="#1E90FF" />
-            <h2 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em' }}>Top Artists</h2>
+            <h2 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>Top Artists</h2>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {topArtists.map((a, i) => (
-              <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: '#111', borderRadius: '12px', border: '1px solid #1a1a1a' }}>
                 <span style={{ color: '#333', fontSize: '0.85rem', fontWeight: 700, minWidth: '20px', textAlign: 'right' }}>
                   {i + 1}
                 </span>
@@ -123,6 +144,7 @@ export default function Stats() {
                         height: '100%',
                         background: 'linear-gradient(90deg, #1E90FF, #8B5CF6)',
                         borderRadius: '2px',
+                        transition: 'width 0.6s ease',
                       }}
                     />
                   </div>
@@ -138,9 +160,9 @@ export default function Stats() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <Clock size={18} color="#1E90FF" />
-            <h2 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em' }}>Recently Played</h2>
+            <h2 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>Recently Played</h2>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {recentPlays.slice(0, 15).map((t, i) => (
               <div
                 key={t._id}
@@ -148,7 +170,10 @@ export default function Stats() {
                   display: 'flex', alignItems: 'center', gap: '14px',
                   padding: '10px 16px', background: '#111', borderRadius: '12px',
                   border: '1px solid #1a1a1a',
+                  transition: 'background 0.15s',
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#161616')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#111')}
               >
                 <span style={{ color: '#2a2a2a', fontSize: '0.8rem', fontWeight: 700, minWidth: '22px', textAlign: 'right' }}>
                   {i + 1}
@@ -184,13 +209,17 @@ export default function Stats() {
   )
 }
 
-function StatCard({ icon, label, value, sub, color }) {
+function StatCard({ icon, label, value, sub, color, sparkData, sparkMax }) {
   return (
     <div
       style={{
         background: '#111', border: '1px solid #1a1a1a', borderRadius: '16px',
-        padding: '22px', display: 'flex', flexDirection: 'column', gap: '14px',
+        padding: '22px', display: 'flex', flexDirection: 'column', gap: '12px',
+        transition: 'border-color 0.2s, background 0.2s',
+        position: 'relative', overflow: 'hidden',
       }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${color}30`; e.currentTarget.style.background = '#141414' }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1a1a1a'; e.currentTarget.style.background = '#111' }}
     >
       <div
         style={{
@@ -202,12 +231,30 @@ function StatCard({ icon, label, value, sub, color }) {
         {icon}
       </div>
       <div>
-        <p style={{ color: '#fff', fontWeight: 800, fontSize: '1.9rem', letterSpacing: '-0.03em', lineHeight: 1 }}>
+        <p style={{ color: '#fff', fontWeight: 900, fontSize: '1.9rem', letterSpacing: '-0.03em', lineHeight: 1, fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>
           {value}
         </p>
         <p style={{ color: '#ccc', fontWeight: 600, fontSize: '0.85rem', marginTop: '6px' }}>{label}</p>
         <p style={{ color: '#333', fontSize: '0.72rem', marginTop: '3px' }}>{sub}</p>
       </div>
+      {/* Mini sparkline */}
+      {sparkData && sparkMax > 0 && (
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '24px', marginTop: '2px' }}>
+          {sparkData.map((v, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                height: `${Math.max(2, (v / sparkMax) * 100)}%`,
+                background: v > 0 ? color : '#222',
+                borderRadius: '2px',
+                opacity: v > 0 ? 0.7 + (v / sparkMax) * 0.3 : 0.3,
+                transition: 'height 0.4s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

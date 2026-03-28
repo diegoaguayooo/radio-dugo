@@ -1,5 +1,5 @@
 import React from 'react'
-import { Play } from 'lucide-react'
+import { Play, Pause } from 'lucide-react'
 import { usePlayer } from '../../contexts/PlayerContext'
 
 export default function TrackCard({ track, queue, index = 0 }) {
@@ -18,9 +18,10 @@ export default function TrackCard({ track, queue, index = 0 }) {
       onClick={handlePlay}
       draggable
       onDragStart={(e) => e.dataTransfer.setData('text/plain', JSON.stringify(track))}
+      className="track-card-hover"
       style={{
-        background: '#111',
-        border: '1px solid #1a1a1a',
+        background: isActive ? 'rgba(30,144,255,0.06)' : '#111',
+        border: `1px solid ${isActive ? 'rgba(30,144,255,0.25)' : '#1a1a1a'}`,
         borderRadius: '14px',
         padding: '16px',
         cursor: 'pointer',
@@ -29,16 +30,18 @@ export default function TrackCard({ track, queue, index = 0 }) {
         overflow: 'hidden',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#1a1a1a'
-        e.currentTarget.style.borderColor = '#2a2a2a'
-        e.currentTarget.querySelector('.play-fab').style.opacity = '1'
-        e.currentTarget.querySelector('.play-fab').style.transform = 'translateY(0) scale(1)'
+        e.currentTarget.style.background = isActive ? 'rgba(30,144,255,0.1)' : '#181818'
+        e.currentTarget.style.borderColor = isActive ? 'rgba(30,144,255,0.35)' : '#2a2a2a'
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        const fab = e.currentTarget.querySelector('.play-fab')
+        if (fab) { fab.style.opacity = '1'; fab.style.transform = 'translateY(0) scale(1)' }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = '#111'
-        e.currentTarget.style.borderColor = '#1a1a1a'
-        e.currentTarget.querySelector('.play-fab').style.opacity = '0'
-        e.currentTarget.querySelector('.play-fab').style.transform = 'translateY(6px) scale(0.9)'
+        e.currentTarget.style.background = isActive ? 'rgba(30,144,255,0.06)' : '#111'
+        e.currentTarget.style.borderColor = isActive ? 'rgba(30,144,255,0.25)' : '#1a1a1a'
+        e.currentTarget.style.transform = 'translateY(0)'
+        const fab = e.currentTarget.querySelector('.play-fab')
+        if (fab && !isActive) { fab.style.opacity = '0'; fab.style.transform = 'translateY(8px) scale(0.88)' }
       }}
     >
       {/* Artwork */}
@@ -51,7 +54,9 @@ export default function TrackCard({ track, queue, index = 0 }) {
             background: '#1a1a1a',
             overflow: 'hidden',
             position: 'relative',
-            border: isActive ? '2px solid #1E90FF' : '1px solid #222',
+            border: isActive ? '1.5px solid rgba(30,144,255,0.4)' : '1px solid #222',
+            boxShadow: isActive ? '0 0 20px rgba(30,144,255,0.15)' : 'none',
+            transition: 'box-shadow 0.3s, border-color 0.3s',
           }}
         >
           {art && (
@@ -70,7 +75,7 @@ export default function TrackCard({ track, queue, index = 0 }) {
           )}
         </div>
 
-        {/* Play FAB */}
+        {/* Play FAB — slides up from below */}
         <button
           className="play-fab"
           onClick={handlePlay}
@@ -81,27 +86,30 @@ export default function TrackCard({ track, queue, index = 0 }) {
             width: 44,
             height: 44,
             borderRadius: '50%',
-            background: '#1E90FF',
+            background: 'linear-gradient(135deg, #1E90FF, #38b6ff)',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             opacity: isActive ? 1 : 0,
-            transform: isActive ? 'translateY(0) scale(1)' : 'translateY(6px) scale(0.9)',
-            transition: 'opacity 0.2s, transform 0.2s',
-            boxShadow: '0 4px 20px rgba(30,144,255,0.4)',
+            transform: isActive ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.88)',
+            transition: 'opacity 0.18s ease-out, transform 0.18s ease-out',
+            boxShadow: '0 4px 20px rgba(30,144,255,0.45)',
           }}
         >
-          <Play size={18} color="#fff" fill="#fff" style={{ marginLeft: '2px' }} />
+          {isActive && isPlaying
+            ? <Pause size={17} color="#fff" fill="#fff" />
+            : <Play size={17} color="#fff" fill="#fff" style={{ marginLeft: '2px' }} />
+          }
         </button>
       </div>
 
       {/* Info */}
-      <p style={{ color: '#fff', fontWeight: 600, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>
+      <p style={{ color: isActive ? '#5badff' : '#fff', fontWeight: 600, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px', transition: 'color 0.2s' }}>
         {track.title}
       </p>
-      <p style={{ color: '#666', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <p style={{ color: '#555', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {track.artist}
       </p>
     </div>

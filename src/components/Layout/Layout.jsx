@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import PlayerBar from './PlayerBar'
 import QueuePanel from './QueuePanel'
-import DJDugo from './DJDugo'
 import MobileNav from './MobileNav'
 import MobileHeader from './MobileHeader'
 import MobileSidebar from './MobileSidebar'
@@ -70,8 +69,6 @@ export default function Layout() {
       {/* Mobile bottom nav */}
       {isMobile && <MobileNav />}
 
-      {/* DJ Dugo — renders nothing, just speaks */}
-      <DJDugo />
 
       {/* First-login welcome modal */}
       {showWelcome && <WelcomeModal onClose={dismissWelcome} />}

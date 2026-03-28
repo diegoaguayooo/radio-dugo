@@ -115,12 +115,12 @@ export default function PlayerBar() {
         >
           {/* Thin progress strip */}
           <div style={{ height: '3px', background: '#1a1a1a' }}>
-            <div style={{ width: `${progress}%`, height: '100%', background: '#1E90FF', transition: 'width 0.1s linear' }} />
+            <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #1E90FF, #38b6ff)', transition: 'width 0.1s linear' }} />
           </div>
           {/* Bar */}
-          <div style={{ height: '72px', background: '#0d0d0d', borderTop: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px' }}>
+          <div className="glass-player" style={{ height: '72px', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '10px' }}>
             {/* Artwork */}
-            <div style={{ width: 46, height: 46, borderRadius: 8, flexShrink: 0, overflow: 'hidden', background: '#1a1a1a', border: '1px solid #222', position: 'relative' }}>
+            <div className="art-glow" style={{ width: 46, height: 46, borderRadius: 8, flexShrink: 0, overflow: 'hidden', background: '#1a1a1a', border: '1px solid #222', position: 'relative' }}>
               {artwork && <img src={artwork} alt={currentTrack?.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
             {/* Title / artist */}
@@ -129,7 +129,16 @@ export default function PlayerBar() {
               <p style={{ color: '#666', fontSize: '0.73rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>{currentTrack?.artist}</p>
             </div>
             {/* Like */}
-            <button onClick={(e) => { e.stopPropagation(); toggleLike(currentTrack) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: liked ? '#1E90FF' : '#555', display: 'flex', padding: '8px', flexShrink: 0 }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleLike(currentTrack)
+                e.currentTarget.classList.remove('like-pop')
+                void e.currentTarget.offsetWidth
+                e.currentTarget.classList.add('like-pop')
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: liked ? '#1E90FF' : '#666', display: 'flex', padding: '8px', flexShrink: 0 }}
+            >
               <Heart size={18} fill={liked ? '#1E90FF' : 'none'} />
             </button>
             {/* Prev */}
@@ -155,14 +164,13 @@ export default function PlayerBar() {
 
   return (
     <div
+      className="glass-player"
       style={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
         height: '88px',
-        background: '#0d0d0d',
-        borderTop: '1px solid #1e1e1e',
         display: 'flex',
         alignItems: 'center',
         padding: '0 24px',
@@ -173,6 +181,7 @@ export default function PlayerBar() {
       {/* ─── Left: track info ─── */}
       <div style={{ flex: '0 0 260px', display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
         <div
+          className="art-glow"
           style={{
             width: 56,
             height: 56,
@@ -220,20 +229,26 @@ export default function PlayerBar() {
         </div>
         {currentTrack && (
           <button
-            onClick={() => toggleLike(currentTrack)}
+            onClick={(e) => {
+              toggleLike(currentTrack)
+              const el = e.currentTarget
+              el.classList.remove('like-pop')
+              void el.offsetWidth
+              el.classList.add('like-pop')
+            }}
             title={liked ? 'Remove from liked' : 'Like'}
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               color: liked ? '#1E90FF' : '#555',
-              transition: 'color 0.2s, transform 0.15s',
+              transition: 'color 0.2s',
               flexShrink: 0,
               display: 'flex',
               padding: '4px',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.15)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = liked ? '#3aa3ff' : '#888')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = liked ? '#1E90FF' : '#555')}
           >
             <Heart size={18} fill={liked ? '#1E90FF' : 'none'} />
           </button>

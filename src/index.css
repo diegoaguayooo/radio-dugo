@@ -1,3 +1,6 @@
+/* ── Satoshi font (via CDN) — must be first ─────────────── */
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,800,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,6 +22,13 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Subtle grain texture for depth */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ── Headings use Satoshi ─────────────────────────────────── */
+h1, h2, h3 {
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
 }
 
 /* Scrollbar */
@@ -83,8 +93,22 @@ input[type='range'].volume-slider::-webkit-slider-thumb {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Frosted glass for player/panels */
+.glass-player {
+  background: rgba(10, 10, 10, 0.72);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
 .glow-blue {
   box-shadow: 0 0 30px rgba(30, 144, 255, 0.25);
+}
+
+/* Artwork glow — applied to track art in player */
+.art-glow {
+  box-shadow: 0 8px 40px rgba(30, 144, 255, 0.3), 0 2px 12px rgba(0, 0, 0, 0.6);
+  transition: box-shadow 0.4s ease;
 }
 
 /* Track progress bar accent fill */
@@ -102,13 +126,13 @@ input[type='range'].volume-slider::-webkit-slider-thumb {
   top: 0;
   height: 100%;
   border-radius: 2px;
-  background: #1E90FF;
+  background: linear-gradient(90deg, #1E90FF, #38b6ff);
   pointer-events: none;
   transition: width 0.1s linear;
 }
 
 .progress-track:hover .progress-fill {
-  background: #3aa3ff;
+  background: linear-gradient(90deg, #3aa3ff, #60c8ff);
 }
 
 /* Sidebar active link */
@@ -123,6 +147,28 @@ input[type='range'].volume-slider::-webkit-slider-thumb {
 /* Card hover */
 .music-card {
   @apply bg-surface-2 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:bg-surface-3;
+}
+
+/* Card gradient border on hover */
+.track-card-hover {
+  position: relative;
+}
+.track-card-hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(30,144,255,0.25), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.track-card-hover:hover::before {
+  opacity: 1;
 }
 
 /* Spinning album art */
@@ -171,6 +217,28 @@ input[type='range'].volume-slider::-webkit-slider-thumb {
   animation: bounce-slow 2s ease-in-out infinite;
 }
 
+/* ── Page transitions ───────────────────────────────────── */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: page-enter 0.2s ease-out forwards;
+}
+
+/* ── Like button pop animation ─────────────────────────── */
+@keyframes like-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.45); }
+  65%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+
+.like-pop {
+  animation: like-pop 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
 /* ── Custom button tooltips ─────────────────────────────── */
 button[title] {
   position: relative;
@@ -211,6 +279,31 @@ button[title]:hover::after {
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Skeleton shimmer ───────────────────────────────────── */
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ── Bottom nav pill indicator ──────────────────────────── */
+.nav-pill-dot {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #1E90FF;
 }
 
 /* ── Mobile / touch improvements ───────────────────────── */

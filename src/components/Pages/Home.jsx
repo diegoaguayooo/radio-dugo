@@ -191,37 +191,37 @@ export default function Home() {
   const isMobile = useIsMobile()
 
   return (
-    <div style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1400px' }}>
+    <div className="page-enter" style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1400px' }}>
       {/* Greeting */}
-      <h1 style={{ color: '#fff', fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, marginBottom: '32px', letterSpacing: '-0.02em' }}>
+      <h1 style={{ color: '#fff', fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, marginBottom: '32px', letterSpacing: '-0.03em', fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>
         {greeting}
       </h1>
 
-      {/* Quick links */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '48px' }}>
+      {/* Quick links — wider banner style */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '48px' }}>
         {QUICK_LINKS.map(({ label, to, color, icon: Icon }) => (
           <button
             key={to}
             onClick={() => navigate(to)}
             style={{
-              background: '#111',
-              border: '1px solid #1a1a1a',
+              background: `linear-gradient(135deg, ${color}18 0%, #111 80%)`,
+              border: `1px solid ${color}28`,
               borderRadius: '12px',
-              padding: '14px 18px',
+              padding: '16px 18px',
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
               cursor: 'pointer',
-              transition: 'background 0.2s, transform 0.15s',
+              transition: 'background 0.2s, border-color 0.2s, transform 0.15s',
               textAlign: 'left',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#111'; e.currentTarget.style.transform = 'translateY(0)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}28 0%, #161616 80%)`; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = `${color}45` }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}18 0%, #111 80%)`; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = `${color}28` }}
           >
-            <div style={{ width: 42, height: 42, borderRadius: '10px', background: `${color}22`, border: `1px solid ${color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon size={20} color={color} />
+            <div style={{ width: 40, height: 40, borderRadius: '10px', background: `${color}22`, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon size={19} color={color} />
             </div>
-            <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{label}</span>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.88rem' }}>{label}</span>
           </button>
         ))}
       </div>
@@ -330,17 +330,17 @@ function Section({ title, onMore, children }) {
   return (
     <div style={{ marginBottom: '48px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h2 style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em' }}>
+        <h2 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', fontFamily: "'Satoshi', 'Inter', system-ui, sans-serif" }}>
           {title}
         </h2>
         {onMore && (
           <button
             onClick={onMore}
-            style={{ background: 'none', border: 'none', color: '#666', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', letterSpacing: '0.05em', textTransform: 'uppercase', transition: 'color 0.2s' }}
+            style={{ background: 'none', border: 'none', color: '#555', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#666')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#555')}
           >
-            See all
+            See all <span style={{ fontSize: '1rem', lineHeight: 1 }}>→</span>
           </button>
         )}
       </div>

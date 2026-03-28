@@ -11,7 +11,6 @@ import {
   Plus,
   Music2,
   BarChart2,
-  Radio,
 } from 'lucide-react'
 import RadioDugoLogo from '../../assets/RadioDugoLogo'
 import { useAuth } from '../../contexts/AuthContext'
@@ -44,7 +43,7 @@ const SECONDARY = [
 
 export default function Sidebar() {
   const { user, userProfile, logout } = useAuth()
-  const { currentTrack, djEnabled, toggleDJ } = usePlayer()
+  const { currentTrack } = usePlayer()
   const navigate = useNavigate()
   const [playlists, setPlaylists] = useState([])
   const [dropTarget, setDropTarget] = useState(null) // playlist id being hovered
@@ -247,15 +246,6 @@ export default function Sidebar() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              onClick={toggleDJ}
-              title={djEnabled ? 'DJ Dugo: ON' : 'DJ Dugo: OFF'}
-              style={{ background: djEnabled ? 'rgba(30,144,255,0.12)' : 'none', border: djEnabled ? '1px solid rgba(30,144,255,0.3)' : '1px solid transparent', color: djEnabled ? '#1E90FF' : '#555', cursor: 'pointer', display: 'flex', padding: '4px', borderRadius: '6px', transition: 'color 0.2s, background 0.2s' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = djEnabled ? '#3aa3ff' : '#fff')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = djEnabled ? '#1E90FF' : '#555')}
-            >
-              <Radio size={16} />
-            </button>
             <NavLink
               to="/app/settings"
               title="Settings"

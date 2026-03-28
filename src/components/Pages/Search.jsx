@@ -141,7 +141,7 @@ export default function Search() {
   }
 
   return (
-    <div style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1000px' }}>
+    <div className="page-enter" style={{ padding: isMobile ? '20px 16px 32px' : '32px 32px 40px', maxWidth: '1000px' }}>
       <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 800, marginBottom: '24px', letterSpacing: '-0.02em' }}>
         Search
       </h1>

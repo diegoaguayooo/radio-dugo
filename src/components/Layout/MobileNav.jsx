@@ -10,10 +10,9 @@ const NAV = [
 
 export default function MobileNav() {
   return (
-    <nav style={{
+    <nav className="glass-player" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      height: '60px', background: '#0d0d0d',
-      borderTop: '1px solid #1e1e1e',
+      height: '60px',
       display: 'flex', alignItems: 'center',
       justifyContent: 'space-around', zIndex: 99,
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -22,14 +21,22 @@ export default function MobileNav() {
         <NavLink key={to} to={to}
           style={({ isActive }) => ({
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            gap: '3px', color: isActive ? '#1E90FF' : '#666',
+            gap: '3px', color: isActive ? '#fff' : '#555',
             textDecoration: 'none', fontSize: '0.6rem', fontWeight: 700,
             letterSpacing: '0.04em', textTransform: 'uppercase',
             padding: '4px 24px', transition: 'color 0.15s', minWidth: 72,
+            position: 'relative',
           })}
         >
-          <Icon size={22} />
-          <span>{label}</span>
+          {({ isActive }) => (
+            <>
+              <div style={{ position: 'relative' }}>
+                <Icon size={22} />
+                {isActive && <span className="nav-pill-dot" />}
+              </div>
+              <span style={{ color: isActive ? '#1E90FF' : '#555' }}>{label}</span>
+            </>
+          )}
         </NavLink>
       ))}
     </nav>

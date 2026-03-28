@@ -69,10 +69,24 @@ export const useAuth = () => {
   return ctx
 }
 
+// Read Firebase Auth's localStorage cache synchronously.
+// Firebase (with LOCAL persistence) stores the current user under
+// "firebase:authUser:<apiKey>:[DEFAULT]". If that key exists we know
+// the user was previously signed in, so we can skip the loading gate
+// entirely and let onAuthStateChanged confirm in the background.
+function hasCachedFirebaseUser() {
+  try {
+    return Object.keys(localStorage).some((k) => k.startsWith('firebase:authUser:'))
+  } catch {
+    return false
+  }
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Skip the loading gate if a cached session exists — renders instantly.
+  const [loading, setLoading] = useState(!hasCachedFirebaseUser())
 
   const fetchProfile = useCallback(async (uid) => {
     try {
@@ -111,22 +125,27 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserProfile = async (data) => {
     if (!user) return
-    await updateDoc(doc(db, 'users', user.uid), data)
+    // Optimistic update — reflect change in UI immediately, then persist
     setUserProfile((prev) => ({ ...(prev || {}), ...data }))
+    await updateDoc(doc(db, 'users', user.uid), data)
   }
 
-  // Primary auth state listener
+  // Primary auth state listener — set loading=false immediately so the app
+  // renders as soon as Firebase Auth resolves, then fetch profile in background.
+  // A 5-second failsafe ensures a Firebase hang never keeps the user on a blank screen.
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const failsafe = setTimeout(() => setLoading(false), 5000)
+    const unsub = onAuthStateChanged(auth, (u) => {
+      clearTimeout(failsafe)
       setUser(u)
       if (u) {
-        await fetchProfile(u.uid)
+        fetchProfile(u.uid) // non-blocking — profile loads in background
       } else {
         setUserProfile(null)
       }
       setLoading(false)
     })
-    return unsub
+    return () => { clearTimeout(failsafe); unsub() }
   }, [fetchProfile])
 
   // Retry profile fetch if user is authenticated but profile didn't load
