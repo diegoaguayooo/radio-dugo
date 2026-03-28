@@ -45,16 +45,11 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
 
   const art = track.artwork_url || null
 
-  const openMenu = async (e) => {
+  const openMenu = (e) => {
     e.stopPropagation()
     e.preventDefault()
     if (!user) return
     if (showMenu) { setShowMenu(false); return }
-
-    const snap = await getDocs(
-      query(collection(db, 'users', user.uid, 'playlists'), orderBy('createdAt', 'desc'))
-    )
-    setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
 
     // Position dropdown relative to viewport so it never clips
     if (plusBtnRef.current) {
