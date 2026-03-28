@@ -27,15 +27,12 @@ export default function TrackRow({ track, index, queue, showIndex = true, durati
   const menuRef = useRef(null)
   const plusBtnRef = useRef(null)
 
-  // Pre-load playlists so the menu opens instantly
+  // Load playlists once on mount from local cache — instant, no persistent listener per row
   useEffect(() => {
     if (!user) return
-    const unsub = onSnapshot(
-      query(collection(db, 'users', user.uid, 'playlists'), orderBy('createdAt', 'desc')),
-      (snap) => setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      () => {}
-    )
-    return unsub
+    getDocs(query(collection(db, 'users', user.uid, 'playlists'), orderBy('createdAt', 'desc')))
+      .then((snap) => setPlaylists(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      .catch(() => {})
   }, [user])
 
   const handlePlay = () => {
