@@ -59,6 +59,7 @@ export const PlayerProvider = ({ children }) => {
   const ytPlayerRef = useRef(null)
   const progressTimerRef = useRef(null)
   const handlersRef = useRef({})
+  const silentAudioRef = useRef(null)
 
   const repeatRef = useRef(repeat)
   const shuffleRef = useRef(shuffle)
