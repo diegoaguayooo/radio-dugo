@@ -28,7 +28,9 @@ export default function Settings() {
   const saveProfile = async () => {
     const cleanFirst = sanitizeName(firstName)
     const cleanLast = sanitizeName(lastName)
-    await updateUserProfile({ firstName: cleanFirst, lastName: cleanLast, avatarId: selectedAvatar })
+    const data = { firstName: cleanFirst, lastName: cleanLast }
+    if (selectedAvatar) data.avatarId = selectedAvatar
+    await updateUserProfile(data)
     setSaved(true)
     if (isMobile) setEditMode(false)
     setTimeout(() => setSaved(false), 2800)
