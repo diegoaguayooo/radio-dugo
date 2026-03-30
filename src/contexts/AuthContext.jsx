@@ -126,7 +126,8 @@ export const AuthProvider = ({ children }) => {
     if (!user) return
     // Optimistic update — reflect change in UI immediately, then persist
     setUserProfile((prev) => ({ ...(prev || {}), ...data }))
-    await updateDoc(doc(db, 'users', user.uid), data)
+    // setDoc with merge:true is safe even if a field never existed on the doc
+    await setDoc(doc(db, 'users', user.uid), data, { merge: true })
   }
 
   // Primary auth state listener — set loading=false immediately so the app
