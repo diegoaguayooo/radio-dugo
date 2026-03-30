@@ -16,14 +16,14 @@ export default function Settings() {
   const [selectedAvatar, setSelectedAvatar] = useState(userProfile?.avatarId || '')
   const [editMode, setEditMode] = useState(false)
 
-  // Sync form state when userProfile first loads (only if local state is still empty)
+  // Sync form state whenever userProfile arrives from Firestore
   useEffect(() => {
     if (!userProfile) return
     setFirstName((prev) => prev || userProfile.firstName || '')
     setLastName((prev) => prev || userProfile.lastName || '')
-    // Always restore saved avatar from Firestore if local state is empty
-    if (!selectedAvatar && userProfile.avatarId) setSelectedAvatar(userProfile.avatarId)
-  }, [userProfile]) // eslint-disable-line react-hooks/exhaustive-deps
+    // Always restore the saved avatar — never let a stale local value win
+    setSelectedAvatar(userProfile.avatarId || '')
+  }, [userProfile])
 
   const saveProfile = async () => {
     const cleanFirst = sanitizeName(firstName)
