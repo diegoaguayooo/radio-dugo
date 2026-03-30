@@ -71,6 +71,29 @@ export const PlayerProvider = ({ children }) => {
   queueRef.current = queue
   queueIndexRef.current = queueIndex
 
+  // ─── Silent audio keepalive — keeps OS audio session alive so the OS
+  //     shows lock screen controls and allows background playback (Android).
+  //     iOS Safari cannot do background audio in web apps; this is a system limit.
+  useEffect(() => {
+    // Build a 1-second silent WAV in memory — no network request needed
+    const rate = 8000
+    const samples = rate
+    const buf = new ArrayBuffer(44 + samples)
+    const v = new DataView(buf)
+    const s = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)) }
+    s(0, 'RIFF'); v.setUint32(4, 36 + samples, true); s(8, 'WAVE')
+    s(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
+    v.setUint32(24, rate, true); v.setUint32(28, rate, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true)
+    s(36, 'data'); v.setUint32(40, samples, true)
+    new Uint8Array(buf, 44).fill(0x80) // 0x80 = silence for 8-bit unsigned PCM
+    const url = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
+    const audio = new Audio(url)
+    audio.loop = true
+    audio.volume = 0
+    silentAudioRef.current = audio
+    return () => { audio.pause(); audio.src = ''; URL.revokeObjectURL(url) }
+  }, [])
+
   // ─── Progress polling ──────────────────────────────────────────────────────
   const startProgressTimer = useCallback(() => {
     clearInterval(progressTimerRef.current)
@@ -83,6 +106,16 @@ export const PlayerProvider = ({ children }) => {
         setCurrentPos(cur)
         setProgress((cur / dur) * 100)
         setDuration(dur)
+        // Keep lock screen progress bar in sync
+        if ('mediaSession' in navigator && navigator.mediaSession.setPositionState) {
+          try {
+            navigator.mediaSession.setPositionState({
+              duration: p.getDuration(),
+              playbackRate: 1,
+              position: p.getCurrentTime(),
+            })
+          } catch (_) {}
+        }
       }
     }, 500)
   }, [])
