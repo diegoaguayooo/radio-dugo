@@ -388,6 +388,11 @@ export const PlayerProvider = ({ children }) => {
     try {
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
     } catch (_) {}
+    // Sync silent audio keepalive with playback state
+    const sa = silentAudioRef.current
+    if (!sa) return
+    if (isPlaying) sa.play().catch(() => {})
+    else sa.pause()
   }, [isPlaying])
 
   // Keyboard shortcuts
